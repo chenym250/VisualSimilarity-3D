@@ -11,8 +11,33 @@ mesh, meshIO, constants
 import scipy.spatial.distance as distance
 from mayavi import mlab
 import time
+import pickle
+import threading
 
-dbdir = 'C:\\Users\\chenym\\Downloads\\psb_v1\\benchmark\\db\\'
+exitFlag = 0
+
+class ZernikeCalculatorThread (threading.Thread):
+    def __init__(self, threadID, name, lfds, zdict):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.lfds = lfds
+        self.zdict = zdict
+        
+    def run(self):
+        print "Starting " + self.name
+        compute_all_z_for_one_mesh(self.lfds, self.zdict)
+        print "Exiting " + self.name
+
+
+def save_obj(obj, name ):
+    with open('temp/'+ name + time.strftime('_%H_%M_%m_%d', time.localtime()) \
+    + '.pkl', 'wb') as f:
+        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
+def load_obj(name ):
+    with open('temp/' + name + '.pkl', 'rb') as f:
+        return pickle.load(f)
 
 def readfrompsb(mesh_number):
     parent_number = np.floor(mesh_number/100.0)
@@ -22,6 +47,9 @@ def readfrompsb(mesh_number):
         m = meshIO.read_off_and_store_as_vf(f)
     f.close()
     return m
+
+
+dbdir = 'C:\\Users\\chenym\\Downloads\\psb_v1\\benchmark\\db\\'
 
 t0 = time.time()
 meshes = []
@@ -124,16 +152,39 @@ print 'projection takes: %fs' % (t3-t2)
 #print 'retrieving features from one mesh takes: %fs' % (t5-t4)
 
 # compute features of the rest
+def compute_all_z_for_one_mesh(lfds, z_dict):
+    for key in lfds.keys():
+        z_dict[key] = []
+        for img in lfds[key]:
+            z_dict[key].append(zernike3.describe(img))
+    return
+
 t6 = time.time()
 z_rest = []
+#for lfds in lfds_all:
+#    z_this = {}
+#    for key in lfds.keys():
+#        z_this[key] = []
+#        for img in lfds[key]:
+#            z_this[key].append(zernike3.describe(img))
+#    z_rest.append(z_this)
+#    print '.',
+threads = []
+i = 1
 for lfds in lfds_all:
-    z_this = {}
-    for key in lfds.keys():
-        z_this[key] = []
-        for img in lfds[key]:
-            z_this[key].append(zernike3.describe(img))
-    z_rest.append(z_this)
-    print '.',
+    z_local = {}
+    z_rest.append(z_local)
+    threads.append(ZernikeCalculatorThread(i,'thread-%d'%(i),lfds,z_local))
+    i += 1
+
+for i in xrange(totalsize):
+    threads[i].start()
+
+for i in xrange(totalsize):
+    threads[i].join()
+
+save_obj(z_rest,'zernike3_%d_shapes'%totalsize)
+save_obj(indices,'meshID_%d_shapes'%totalsize)
 z0 = z_rest.pop(query_id)
 t7 = time.time()
 print 'retrieving features from all the meshes takes: %fs' % (t7-t6)

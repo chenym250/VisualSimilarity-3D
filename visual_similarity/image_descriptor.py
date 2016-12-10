@@ -13,7 +13,7 @@ class ZernikeMoments:
     Source: http://www.pyimagesearch.com/2014/04/07/
     building-pokedex-python-indexing-sprites-using-shape-descriptors-step-3-6/
     """
-    def __init__(self, radius=256, degree = 10, com = [127.5,127.5]):
+    def __init__(self, radius=128, degree = 10, com = [127.5,127.5]):
         """
         
         """
@@ -21,4 +21,6 @@ class ZernikeMoments:
         self.degree = degree
  
     def describe(self, image):
-        return mahotas.features.zernike_moments(image, self.radius, degree=self.degree)
+        return mahotas.features.zernike_moments(\
+        image, self.radius, degree=self.degree)[1:] # ignore the first moment
+        # first moment is the center of the mass

@@ -27,7 +27,11 @@ from PIL import Image
 ##############################################################################
 DBDIR = 'C:\\Users\\chenym\\Downloads\\psb_v1\\benchmark\\db\\'
 PSB_INDICES_FILE = 'indexlist0.txt'
+OUTPUTDIR = 'db\\'
 MAX_THREAD = 10
+USEMULTITHREAD = True
+USEPALLELPROJECTION = True
+INTERRUPTABLE = True
 
 ##############################################################################
 # flags
@@ -62,13 +66,10 @@ class ZernikeCalculatorThread (threading.Thread):
 # helper functions
 ##############################################################################
 def save_obj(obj, name ):
-    with open(name + time.strftime('_%H_%M_%m_%d', time.localtime()) \
-    + '.pkl', 'wb') as f:
+    full_name = name + time.strftime('_%H%M_%m%d', time.localtime()) + '.pkl'
+    with open(full_name, 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-
-def load_obj(name ):
-    with open(name + '.pkl', 'rb') as f:
-        return pickle.load(f)
+    return full_name
 
 def readfrompsb(mesh_number):
     parent_number = np.floor(mesh_number/100.0)
@@ -159,12 +160,16 @@ def computefullscore(query_index,_meshes,_z_all):
         mlab.figure()
         mlab.triangular_mesh(m.verts[:,0],m.verts[:,1],m.verts[:,2],m.faces)
         mlab.text(0.5, 0.5, 'the score is %f' % scores[sort_index[i]])
+        
 ##############################################################################
 # main method
 ##############################################################################
-def main_process(indices, zernike, use_parallel_projection=True, \
-use_multithread=True, maxthread=10, interruptable=True,\
-saveimg=False, savedimgdir='temp\\', savedimgformat='png'):
+        
+def main_process(indices, descriptor, outputdir=OUTPUTDIR,
+                 use_parallel_projection=USEPALLELPROJECTION, 
+                 use_multithread=USEMULTITHREAD, maxthread=MAX_THREAD, 
+                 interruptable=INTERRUPTABLE,
+                 saveimg=False, savedimgdir='', savedimgformat='png'):
 
     meshes = [] # render all meshes at once, store them at once
     totalsize = len(indices)
@@ -213,6 +218,8 @@ saveimg=False, savedimgdir='temp\\', savedimgformat='png'):
     time_taken.append(t3-t2)
     print 'projection takes: %f s' % (t3-t2)
     
+    del meshes    
+    
     # save images if necessary
     if saveimg:
         mesh_index = 0
@@ -223,8 +230,8 @@ saveimg=False, savedimgdir='temp\\', savedimgformat='png'):
                     new_img = Image.fromarray(img)
                     new_img.save\
                     (savedimgdir+\
-                    'mesh%d_lightfield%d_angle_%d'%(mesh_index,key,count+\
-                    savedimgformat))
+                    'mesh%d_lightfield%d_angle_%d.'%(mesh_index,key,count)+\
+                    savedimgformat)
                     count += 1
             mesh_index += 1
     
@@ -239,11 +246,10 @@ saveimg=False, savedimgdir='temp\\', savedimgformat='png'):
             for key in lfds.keys():
                 z_local[key] = []
                 for img in lfds[key]:
-                    z_local[key].append(zernike.describe(img))
+                    z_local[key].append(descriptor.describe(img))
             z_all.append(z_local)
     else:
         threads = []
-        descriptors = []
         thread_id = 1
         
         q = Queue.Queue()        
@@ -255,8 +261,6 @@ saveimg=False, savedimgdir='temp\\', savedimgformat='png'):
         
         num_threads = min([totalsize,maxthread])
         for i in xrange(num_threads):
-            descriptor = zernike.copy()
-            descriptors.append(descriptor)
             threads.append(ZernikeCalculatorThread\
             (thread_id,'worker-%d'%(thread_id),q,descriptor))
             thread_id += 1
@@ -281,12 +285,16 @@ saveimg=False, savedimgdir='temp\\', savedimgformat='png'):
             threads[i].join()
                     
         print 'all threads joined'
-    
-    save_obj(z_all,'zernike3_%d_shapes'%totalsize)
-    save_obj(indices,'meshID_%d_shapes'%totalsize)
+
     t7 = time.time()
-    print 'retrieving features from all the meshes takes: %f s' % (t7-t6)
-    return [meshes, z_all]
+    print 'retrieving features from all the meshes takes: %f s' % (t7-t6)    
+#    save_obj(z_all,'zernike3_%d_shapes'%totalsize)
+#    save_obj(indices,'meshID_%d_shapes'%totalsize)
+    outputdata = {'mesh_list':indices,'features':z_all,\
+    'lightfield_id':[lf.id for lf in lfs],'descriptor_attributes':descriptor.attributes()}
+    name = save_obj(outputdata,outputdir+'descriptor_%s_shapecount_%d_timedate_'%(descriptor.name, totalsize))
+    
+    print 'data saved, check %s folder; file name: %s' % (outputdir,name)
 
 ##############################################################################
 # main thread starts here
@@ -296,8 +304,9 @@ if __name__ == '__main__':
 #    zernike1 = image_descriptor.ZernikeMoments(degree=4) # 8 coeffs
 #    zernike2 = image_descriptor.ZernikeMoments(degree=6) # 15 coeffs
     zernike3 = image_descriptor.ZernikeMoments(degree=10) # 35 coeffs
-    indices = np.loadtxt(PSB_INDICES_FILE,dtype='int16',delimiter=',')
-    results = main_process(indices.tolist(),zernike3,use_parallel_projection=True,\
-    maxthread=10,interruptable=True)
+    ids = np.loadtxt(PSB_INDICES_FILE,dtype='int16',delimiter=',').tolist()
+#    main_process(indices.tolist(),zernike3,\
+#    use_parallel_projection=USEPALLELPROJECTION,\
+#    maxthread=MAX_THREAD,interruptable=INTERRUPTABLE)
 
-#    results = main_process(indices.tolist(),zernike3,use_multithread=False)
+    main_process(ids,zernike3,saveimg=True, savedimgdir='temp2\\', savedimgformat='png')

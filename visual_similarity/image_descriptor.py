@@ -20,6 +20,7 @@ class ZernikeMoments:
         self.radius = radius
         self.degree = degree
         self.com = com
+        self.name = 'zernike'
  
     def describe(self, image):
         return mahotas.features.zernike_moments(\
@@ -29,4 +30,6 @@ class ZernikeMoments:
         
     def copy(self):
         return ZernikeMoments(self.radius,self.degree,self.com)
-        
+    
+    def attributes(self):
+        return {'radius':self.radius,'degree':self.degree,'com':self.com}

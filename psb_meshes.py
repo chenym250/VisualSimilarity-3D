@@ -5,6 +5,9 @@ Created on Fri Dec 09 20:42:18 2016
 @author: chenym
 """
 
+##############################################################################
+# imports
+##############################################################################
 import numpy as np
 from visual_similarity import image_descriptor, lightfield_descriptor, \
 mesh, meshIO, constants
@@ -13,80 +16,70 @@ from mayavi import mlab
 import time
 import pickle
 import threading
+import Queue
+from PIL import Image
 
-exitFlag = 0
 
+
+##############################################################################
+# constants
+# make this configurable in the future
+##############################################################################
+DBDIR = 'C:\\Users\\chenym\\Downloads\\psb_v1\\benchmark\\db\\'
+PSB_INDICES_FILE = 'indexlist0.txt'
+MAX_THREAD = 10
+
+##############################################################################
+# flags
+##############################################################################
+exit_flag = 0
+
+##############################################################################
+# classes
+##############################################################################
 class ZernikeCalculatorThread (threading.Thread):
-    def __init__(self, threadID, name, lfds, zdict):
+    def __init__(self, threadID, name, queue, descriptor):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
-        self.lfds = lfds
-        self.zdict = zdict
+        self.queue = queue
+        self.descriptor = descriptor
         
     def run(self):
         print "Starting " + self.name
-        compute_all_z_for_one_mesh(self.lfds, self.zdict)
+        while not self.queue.empty():
+            if exit_flag:
+                break
+            data = self.queue.get() # data = [id,lfds,z_dict]
+            compute_all_z_for_one_mesh(data[1], data[2] ,self.descriptor)
+            print(self.name + \
+            ' finishes computing the features of mesh %d, remaining: ~%d' %(\
+            data[0], self.queue.qsize()))
         print "Exiting " + self.name
 
 
+##############################################################################
+# helper functions
+##############################################################################
 def save_obj(obj, name ):
-    with open('temp/'+ name + time.strftime('_%H_%M_%m_%d', time.localtime()) \
+    with open(name + time.strftime('_%H_%M_%m_%d', time.localtime()) \
     + '.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
 
 def load_obj(name ):
-    with open('temp/' + name + '.pkl', 'rb') as f:
+    with open(name + '.pkl', 'rb') as f:
         return pickle.load(f)
 
 def readfrompsb(mesh_number):
     parent_number = np.floor(mesh_number/100.0)
-    fileurl = dbdir + ('%d\m%d\m%d.off' % (parent_number,mesh_number,mesh_number))
+    fileurl = DBDIR + ('%d\m%d\m%d.off' % (parent_number,mesh_number,mesh_number))
 
     with open(fileurl, 'r') as f:
         m = meshIO.read_off_and_store_as_vf(f)
     f.close()
     return m
 
-
-dbdir = 'C:\\Users\\chenym\\Downloads\\psb_v1\\benchmark\\db\\'
-
-t0 = time.time()
-meshes = []
-indices = [39,1,2,3,33,100,101,102,103,104,105]
-totalsize = 11
-# pick one for query
-query_id = 9
-
-for x in indices:
-    try:
-        m = readfrompsb(x)
-    except IOError:
-        print('mesh %d does not exist' % x)
-        continue
-    m.centering()
-    m.normalize_isotropic_scale()
-    meshes.append(m)
-
-t1 = time.time()
-
-print 'loading time: %f' % (t1-t0)
-
-# compute light fields
-lfs = []
-for angles in constants.AZIMUTHAL_POLAR_DODECAHEDRON_ROTATION_SET:
-    lfs.append(lightfield_descriptor.LightField(angles))
-
-# visualize the selected one
-m0 = meshes[query_id]
-mlab.figure(size=(300,364))
-mlab.triangular_mesh(m0.verts[:,0],m0.verts[:,1],m0.verts[:,2],m0.faces)
-# initialize different Zernike descriptors
-zernike1 = image_descriptor.ZernikeMoments(degree=4) # 8 coeffs
-zernike2 = image_descriptor.ZernikeMoments(degree=6) # 15 coeffs
-zernike3 = image_descriptor.ZernikeMoments(degree=10) # 35 coeffs
-
-def mlab_projection(m,lf,fig):
+def mlab_projection(m,lf,fig,use_parallel_projection):
     
     mlab.clf(fig)
 
@@ -98,8 +91,13 @@ def mlab_projection(m,lf,fig):
 #    scene=mlab.gcf().scene
 #    scene.set_size((256,256))
     imgs = []
+    if not use_parallel_projection:
+        curr_view = mlab.view()
     for ang in lf.camera_angles:
-        mlab.view(180*ang[0]/np.pi,180*ang[1]/np.pi)
+        if use_parallel_projection:
+            mlab.view(180*ang[0]/np.pi,180*ang[1]/np.pi)
+        else:
+            mlab.view(180*ang[0]/np.pi,180*ang[1]/np.pi,curr_view[2],curr_view[3])
         screenshot = mlab.screenshot()
         screenshot[screenshot>=128] = 255
         screenshot[screenshot<128] = 0
@@ -108,88 +106,13 @@ def mlab_projection(m,lf,fig):
 
     return lfd
 
-# projection of meshes
-t2 = time.time()
-f2 = mlab.figure(size=(300,364))
-scene=mlab.gcf().scene
-scene.parallel_projection = True
-scene.set_size((256,256))
-
-lfds_all = [] # list of dictionaries
-
-for m in meshes:
-    lfds_of_a_mesh = {}
-    for lf in lfs:
-        lfd = mlab_projection(m,lf,f2)
-        lfds_of_a_mesh[lfd.lf.id] = lfd
-    lfds_all.append(lfds_of_a_mesh)
-t3 = time.time()
-
-print 'projection takes: %fs' % (t3-t2)
-
-#
-#from PIL import Image
-#mesh_index = 0
-#for lfds in lfds_all:
-#    for key in lfds.keys():
-#        count = 0
-#        for img in lfds[key]:
-#            new_img = Image.fromarray(img)
-#            new_img.save('D:\\temp\\mesh%d_lightfield%d_angle_%d.png'%(mesh_index,key,count))
-#            count += 1
-#    mesh_index += 1
-
-# compute features of the query
-#t4 = time.time()
-#lfds_m0 = lfds_all.pop(query_id)
-#z0 = {}
-#for key in lfds_m0.keys():
-#    z0[key] = []
-#    for img in lfds_m0[key]:
-#        z0[key].append(zernike1.describe(img))
-#
-#t5 = time.time()
-#print 'retrieving features from one mesh takes: %fs' % (t5-t4)
-
-# compute features of the rest
-def compute_all_z_for_one_mesh(lfds, z_dict):
+def compute_all_z_for_one_mesh(lfds, z_dict, descriptor):
     for key in lfds.keys():
         z_dict[key] = []
         for img in lfds[key]:
-            z_dict[key].append(zernike3.describe(img))
+            z_dict[key].append(descriptor.describe(img))
     return
 
-t6 = time.time()
-z_rest = []
-#for lfds in lfds_all:
-#    z_this = {}
-#    for key in lfds.keys():
-#        z_this[key] = []
-#        for img in lfds[key]:
-#            z_this[key].append(zernike3.describe(img))
-#    z_rest.append(z_this)
-#    print '.',
-threads = []
-i = 1
-for lfds in lfds_all:
-    z_local = {}
-    z_rest.append(z_local)
-    threads.append(ZernikeCalculatorThread(i,'thread-%d'%(i),lfds,z_local))
-    i += 1
-
-for i in xrange(totalsize):
-    threads[i].start()
-
-for i in xrange(totalsize):
-    threads[i].join()
-
-save_obj(z_rest,'zernike3_%d_shapes'%totalsize)
-save_obj(indices,'meshID_%d_shapes'%totalsize)
-z0 = z_rest.pop(query_id)
-t7 = time.time()
-print 'retrieving features from all the meshes takes: %fs' % (t7-t6)
-
-# compute scores (full)
 def dissimilarity_between_descriptors(z1,z2):
     # DA
     permutation = constants.PERMUTATION_DODECAHEDRON_HALF
@@ -203,25 +126,178 @@ def dissimilarity_between_descriptors(z1,z2):
             min_score = curr_score
     return min_score
 
-t8 = time.time()
-scores = []
-for z1 in z_rest:
-    min_score = np.inf
-    for zm0 in z0.values():
-        # dissimilarity between meshes from different orientations
-        for zm1 in z1.values():
-            curr_score = dissimilarity_between_descriptors(zm0,zm1)
-            if curr_score < min_score:
-                min_score = curr_score
-    scores.append(min_score)
-t9 = time.time()
-print 'computing the scores takes: %fs' % (t9-t8)
-
-# display top five
-sort_index = np.argsort(np.array(scores))
-meshes.pop(query_id)
-for i in xrange(10):
-    m = meshes[sort_index[i]]
+def computefullscore(query_index,_meshes,_z_all):
+    # compute scores (full)
+    
+    meshes = _meshes[:]
+    z_all = _z_all[:]    
+    
+    t8 = time.time()
+    scores = []
+    z0 = z_all.pop(query_index)
+    for z1 in z_all:
+        min_score = np.inf
+        for zm0 in z0.values():
+            # dissimilarity between meshes from different orientations
+            for zm1 in z1.values():
+                curr_score = dissimilarity_between_descriptors(zm0,zm1)
+                if curr_score < min_score:
+                    min_score = curr_score
+        scores.append(min_score)
+    t9 = time.time()
+    print 'computing the scores takes: %fs' % (t9-t8)
+    
+    # display top five
+    sort_index = np.argsort(np.array(scores))
+    m0 = meshes.pop(query_index)
     mlab.figure()
-    mlab.triangular_mesh(m.verts[:,0],m.verts[:,1],m.verts[:,2],m.faces)
-    mlab.text(0.5, 0.5, 'the score is %f' % scores[sort_index[i]])
+    mlab.triangular_mesh(m0.verts[:,0],m0.verts[:,1],m0.verts[:,2],m0.faces)
+    mlab.text(0.5, 0.5,'original')
+    
+    for i in xrange(len(meshes)):
+        m = meshes[sort_index[i]]
+        mlab.figure()
+        mlab.triangular_mesh(m.verts[:,0],m.verts[:,1],m.verts[:,2],m.faces)
+        mlab.text(0.5, 0.5, 'the score is %f' % scores[sort_index[i]])
+##############################################################################
+# main method
+##############################################################################
+def main_process(indices, zernike, use_parallel_projection=True, \
+use_multithread=True, maxthread=10, interruptable=True,\
+saveimg=False, savedimgdir='temp\\', savedimgformat='png'):
+
+    meshes = [] # render all meshes at once, store them at once
+    totalsize = len(indices)
+    time_taken = []
+    
+    # step 1. load all meshes
+    t0 = time.time()
+
+    for x in indices:
+        try:
+            m = readfrompsb(x)
+        except IOError:
+            print('mesh %d does not exist; ignored' % x)
+            indices.remove(x)
+            totalsize -= 1
+            continue
+        m.centering()
+        m.normalize_isotropic_scale()
+        meshes.append(m)
+        
+    t1 = time.time()
+    time_taken.append(t1-t0)
+    print 'loading time: %f s' % (t1-t0)
+    
+    # step 2. compute light fields
+    lfs = []
+    for angles in constants.AZIMUTHAL_POLAR_DODECAHEDRON_ROTATION_SET:
+        lfs.append(lightfield_descriptor.LightField(angles))
+    
+    # step 3. projection of meshes
+    t2 = time.time()
+    f2 = mlab.figure(size=(300,364))
+    scene=mlab.gcf().scene
+    scene.parallel_projection = use_parallel_projection
+    scene.set_size((256,256))
+    
+    lfds_all = [] # list of dictionaries
+    
+    for m in meshes:
+        lfds_of_a_mesh = {}
+        for lf in lfs:
+            lfd = mlab_projection(m,lf,f2,use_parallel_projection)
+            lfds_of_a_mesh[lfd.lf.id] = lfd
+        lfds_all.append(lfds_of_a_mesh)
+    t3 = time.time()
+    time_taken.append(t3-t2)
+    print 'projection takes: %f s' % (t3-t2)
+    
+    # save images if necessary
+    if saveimg:
+        mesh_index = 0
+        for lfds in lfds_all:
+            for key in lfds.keys():
+                count = 0
+                for img in lfds[key]:
+                    new_img = Image.fromarray(img)
+                    new_img.save\
+                    (savedimgdir+\
+                    'mesh%d_lightfield%d_angle_%d'%(mesh_index,key,count+\
+                    savedimgformat))
+                    count += 1
+            mesh_index += 1
+    
+    # compute features
+    
+    t6 = time.time()
+    z_all = []
+
+    if not use_multithread:
+        for lfds in lfds_all:
+            z_local = {}
+            for key in lfds.keys():
+                z_local[key] = []
+                for img in lfds[key]:
+                    z_local[key].append(zernike.describe(img))
+            z_all.append(z_local)
+    else:
+        threads = []
+        descriptors = []
+        thread_id = 1
+        
+        q = Queue.Queue()        
+        
+        for i in xrange(totalsize):
+            z_local = {}
+            z_all.append(z_local)
+            q.put([i,lfds_all[i],z_local]) # populate the queue
+        
+        num_threads = min([totalsize,maxthread])
+        for i in xrange(num_threads):
+            descriptor = zernike.copy()
+            descriptors.append(descriptor)
+            threads.append(ZernikeCalculatorThread\
+            (thread_id,'worker-%d'%(thread_id),q,descriptor))
+            thread_id += 1
+        
+        for i in xrange(num_threads):
+            threads[i].start()
+       
+       # join will freeze the main thread and it won't respond to interruption
+        if interruptable:
+            try:
+                while True:
+                    if not q.empty():
+                        time.sleep(1)
+                    else:
+                        break
+            except KeyboardInterrupt:
+                print "key board interrupt"
+                global exit_flag
+                exit_flag = 1
+        
+        for i in xrange(num_threads):
+            threads[i].join()
+                    
+        print 'all threads joined'
+    
+    save_obj(z_all,'zernike3_%d_shapes'%totalsize)
+    save_obj(indices,'meshID_%d_shapes'%totalsize)
+    t7 = time.time()
+    print 'retrieving features from all the meshes takes: %f s' % (t7-t6)
+    return [meshes, z_all]
+
+##############################################################################
+# main thread starts here
+##############################################################################
+if __name__ == '__main__':
+    # initialize different Zernike descriptors
+#    zernike1 = image_descriptor.ZernikeMoments(degree=4) # 8 coeffs
+#    zernike2 = image_descriptor.ZernikeMoments(degree=6) # 15 coeffs
+    zernike3 = image_descriptor.ZernikeMoments(degree=10) # 35 coeffs
+    indices = np.loadtxt(PSB_INDICES_FILE,dtype='int16',delimiter=',')
+    results = main_process(indices.tolist(),zernike3,use_parallel_projection=True,\
+    maxthread=10,interruptable=True)
+
+#    results = main_process(indices.tolist(),zernike3,use_multithread=False)

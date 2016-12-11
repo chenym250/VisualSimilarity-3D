@@ -19,8 +19,14 @@ class ZernikeMoments:
         """
         self.radius = radius
         self.degree = degree
+        self.com = com
  
     def describe(self, image):
         return mahotas.features.zernike_moments(\
-        image, self.radius, degree=self.degree)[1:] # ignore the first moment
+        image, self.radius, degree=self.degree, cm=self.com)[1:]
+        # ignore the first moment
         # first moment is the center of the mass
+        
+    def copy(self):
+        return ZernikeMoments(self.radius,self.degree,self.com)
+        

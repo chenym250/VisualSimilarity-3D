@@ -24,6 +24,7 @@ def compare_full(np.ndarray[DTYPE_t, ndim=2] subset_query,
     cdef int number_of_coeff = subset_query.shape[1]
     cdef int rotation_size = rotation.shape[0]
     cdef int i,j,k,i2,j2,k2,i3,t1,t2
+    cdef int count = 0
     
     cdef double z0,z1
  
@@ -38,8 +39,8 @@ def compare_full(np.ndarray[DTYPE_t, ndim=2] subset_query,
         
         for j in range(query_lf_size):
             for k in range(other_lf_size):
-                curr_score = 0
                 for k3 in range(rotation_size):
+                    curr_score = 0
                     for i2 in range(image_size):
                         i3 = rotation[k3][i2]
                         t1 = j*image_size
@@ -47,6 +48,7 @@ def compare_full(np.ndarray[DTYPE_t, ndim=2] subset_query,
                         for j2 in range(number_of_coeff):
                             z0 = subset_query[i2+t1,j2]
                             z1 = subset_other[i3+t2,j2]
+                            count += 1
                             curr_score += fabs(z0-z1)
                     if low_score < 0 or curr_score < low_score:
                         low_score = curr_score

@@ -13,17 +13,23 @@ from visual_similarity import constants
 import numpy as np
 import scipy.spatial.distance as distance
 import pickle
+from psb_meshes import readfrompsb
+from mayavi import mlab
+from partialcomparison import compare_and_reject as compare_and_reject2
 
 ##############################################################################
 # constants
 # make this configurable in the future
 ##############################################################################
 INPUTDIR = 'db\\'
+lookup = np.random.rand(16,16)
 
+##############################################################################
+# methods
+##############################################################################
 def unfold_map_to_tables(whole_data, table_height, table_width, 
                          skip_mesh_id=[], skip_lf_id=[], skip_angle_id=[]):
     table = np.ones((table_height,table_width))*np.inf
-    index_lookup = np.ones((table_height,3))*np.inf
     mesh_id = 0
     row_pointer = 0
     for mesh_data in whole_data:
@@ -37,13 +43,14 @@ def unfold_map_to_tables(whole_data, table_height, table_width,
                 if angle_id in skip_angle_id:
                     continue
                 table[row_pointer,:] = image_feature
-                index_lookup[row_pointer,:] = \
-                np.array([mesh_id,lf_id,angle_id])
                 angle_id += 1
                 row_pointer += 1
         mesh_id += 1
         
-    return index_lookup, table
+    return table
+
+def _find_digits(zs):
+    return np.ceil(np.log10(zs))
 
 def dissimilarity_between_descriptors(z1,z2):
     """
@@ -72,6 +79,7 @@ def dissimilarity_between_descriptors(z1,z2):
         min_score = 0
         for i in xrange(len(z1)):
             min_score += distance.cityblock(z1[i], z2[i])
+        
         return min_score
 
            
@@ -80,32 +88,50 @@ def dissimilarity_between_descriptors(z1,z2):
     for p0 in permutation:
         curr_score = 0
         for i in xrange(10):
-            curr_score += np.random.rand()#distance.cityblock(z1[i], z2[p0[i]]) # <-- p0[i]
+            curr_score += distance.cityblock(z1[i], z2[p0[i]]) # <-- p0[i]
         if curr_score < min_score:
             min_score = curr_score
 
     return min_score
 
-def computefullscore(query_index,_z_all):
-    # compute scores (full)
+def dissimilarity_between_descriptors_2(z1,z2):
+    """
+    Calculate the L1 distance between two sets of shape descriptors. 
     
-    z_all = _z_all[:]    
+    If the length of the sets is equal to 10, the calculation will be repeated
+    for 60 times, each time corresponds to a rotation of a dodecahedron; if the 
+    length of the sets is not 10, a simple one-to-one comparison will be made.
     
-    t8 = time.time()
-    scores = []
-    z0 = z_all.pop(query_index)
-    for z1 in z_all:
-        min_score = np.inf
-        for zm0 in z0.values():
-            # dissimilarity between meshes from different orientations
-            for zm1 in z1.values():
-                curr_score = dissimilarity_between_descriptors(zm0,zm1)
-                if curr_score < min_score:
-                    min_score = curr_score
-        scores.append(min_score)
-    t9 = time.time()
-    print 'computing the scores takes: %fs' % (t9-t8)
+    Parameters
+    ----------
+    z1 : ndarray
+        The first set to compare. 
+    z2 : ndarray
+        The second set to compare, same size as z1.
 
+    Returns
+    -------
+    float
+        The final score
+    """
+    # DA
+    
+    
+    if z1.shape[0] != 10:
+        distances = np.abs(z1-z2)
+        return np.sum(distances)
+
+           
+    permutation = constants.PERMUTATION_DODECAHEDRON_HALF # shape (60,10)
+    min_score = np.inf
+    for p0 in permutation:        
+        z2_new = z2[p0,:]
+        distances = np.abs(z1-z2_new)
+        curr_score = np.sum(distances)
+        if curr_score < min_score:
+            min_score = curr_score
+
+    return min_score
 
 def load_obj(name ):
     """
@@ -168,6 +194,7 @@ def compare_and_reject(query_id, features, ids_of_set, number_of_coeff,
     
     for i in ids_of_set:
         if i == query_id:
+            count += 1
             continue
         low_score = np.inf
         for lf_id_q in lfs_of_queries:
@@ -176,29 +203,39 @@ def compare_and_reject(query_id, features, ids_of_set, number_of_coeff,
                 0:number_of_coeff]
                 z1 = features[np.array(image_selection)+i*100+lf_id_rest*10,\
                 0:number_of_coeff]
-                new_score = dissimilarity_between_descriptors(z0,z1)
+                new_score = dissimilarity_between_descriptors_2(z0,z1)
                 if new_score < low_score:
                     low_score = new_score
         scores[count] = low_score
         count += 1
         summ += low_score
 
-#    return ids_of_set[scores < summ/float(count)]
-    return ids_of_set[scores < np.median(scores)], scores
+#    return ids_of_set[scores < summ/float(count)
+    print scores
+    return ids_of_set[scores < np.median(scores)], scores[scores < np.median(scores)]
 
 def _combine_returns(return_old,return_new,size):
+    if not return_old:
+        return _single_returns(return_new,size)
     l1 = return_old[0]
     l2 = return_new[0]
     r1 = return_old[1]
     r2 = return_new[1]
-    if len(l2) >= size:
-        return l2[0:size]
     l1 = l1[np.argsort(r1)]
     l2 = l2[np.argsort(r2)]
+    if len(l2) >= size:
+        return l2[0:size]
     result = np.empty((len(l1),),dtype='int16')
     result[0:len(l2)] = l2
     result[len(l2):len(l1)] = np.array([i for i in l1 if i not in l2])
     return result[0:size]
+
+def _single_returns(return_new,size):
+    l2 = return_new[0]
+    r2 = return_new[1]
+    l2 = l2[np.argsort(r2)]
+    size = min(size,len(l2))
+    return l2[0:size]
     
 def retrieval_process(query_id, features, number_of_shape, steps=[0,1,2,3], 
                       min_return_size=5):
@@ -234,7 +271,8 @@ def retrieval_process(query_id, features, number_of_shape, steps=[0,1,2,3],
     lf_select = np.arange(10)
     np.random.shuffle(image_select)
     np.random.shuffle(lf_select)
-    shape_set = np.arange(number_of_shape)
+    result = None
+    args = []
     
     ## step 1
     # "
@@ -244,15 +282,7 @@ def retrieval_process(query_id, features, number_of_shape, steps=[0,1,2,3],
     # database. Three images of each light field are compared, and
     # each image is compared using 8 coefficients of Zernike moment. 
     # "
-    t1 = time.time()
-    step1result = compare_and_reject(query_id,features,shape_set,8,\
-    image_select[0:3],lf_select[0:2],range(10))
-    t2 = time.time()
-    print 'step 1 done in %f s. remaining shapes: %d' % (t2-t1,len(step1result[0]))
-    # remove half of the data
-    shape_set = step1result[0]    
-    if len(shape_set) <= min_return_size:
-        return shape_set
+    args.append([8,image_select[0:3],lf_select[0:2],range(10)])
 
     ## step 2
     # "
@@ -261,14 +291,7 @@ def retrieval_process(query_id, features, number_of_shape, steps=[0,1,2,3],
     # database. Five images of each light field are compared, and
     # each image is compared using 16 coefficients of Zernike moment.
     # "
-    t3 = time.time()
-    step2result = compare_and_reject(query_id,features,shape_set,16,\
-    image_select[0:5],lf_select[0:5],range(10))
-    t4 = time.time()
-    print 'step 2 done in %f s. remaining shapes: %d' % (t4-t3,len(step2result[0]))
-    shape_set = step2result[0]    
-    if len(shape_set) <= min_return_size:
-        return _combine_returns(step1result,step2result,min_return_size)
+    args.append([16,image_select[0:5],lf_select[0:5],range(10)])
     
     ## step 3
     # "
@@ -277,14 +300,7 @@ def retrieval_process(query_id, features, number_of_shape, steps=[0,1,2,3],
     # The other is the same as the second stage, while another five
     # images of each light field are compared.
     # "
-    t5 = time.time()
-    step3result = compare_and_reject(query_id,features,shape_set,16,\
-    image_select,lf_select[0:7],range(10))
-    shape_set = step3result[0]
-    t6 = time.time()
-    print 'step 3 done in %f s. remaining shapes: %d' % (t6-t5,len(shape_set))
-    if len(shape_set) <= min_return_size:
-        return _combine_returns(step2result,step3result,min_return_size)
+    args.append([16,image_select,lf_select[0:7],range(10)])
     
     ## step 4
     # "
@@ -293,26 +309,28 @@ def retrieval_process(query_id, features, number_of_shape, steps=[0,1,2,3],
     # are used. In addition, the top 16 of the 5,460 rotations are
     # recorded between the queried one and others.
     # "
-    t7 = time.time()
-    step4result = compare_and_reject(query_id,features,shape_set,35,\
-    image_select,lf_select,range(10))
-    shape_set = step4result[0]    
-    t8 = time.time()
-    print 'step 4 done in %f s. remaining shapes: %d' % (t8-t7,len(shape_set))
-    if len(shape_set) <= min_return_size:
-        return _combine_returns(step3result,step4result,min_return_size)
+    args.append([35,image_select,lf_select,range(10)])
+        
+    for step in steps:
+        t0 = time.time()
+        prev_result = result
+        if result is None: # initial state
+            result = [np.arange(number_of_shape),]
+        result = compare_and_reject(query_id,features,result[0],*args[step])
+        t1 = time.time()
+        print 'step %d done in %f s. remaining shapes: %d' % (step+1,t1-t0,len(result[0]))
+        if len(result[0]) <= min_return_size:
+            return _combine_returns(prev_result,result,min_return_size)
     
-    return shape_set
+    return _single_returns(result,min_return_size)
 
-def loaddata():
-    full_data = load_obj(INPUTDIR + 'zernike3_200_shapes_01_10_12_11')
-    number_of_shape = 200
-    number_of_lf = 10
+def loaddata(full_data):
+        
+    number_of_shape = len(full_data['mesh_list'])
+    number_of_lf = len(full_data['lightfield_id'])
     number_of_angle = 10
     table_height = number_of_shape*number_of_lf*number_of_angle
-    two_table = unfold_map_to_tables(full_data, table_height, 35)
-#    reference_table = two_table[0]
-    feature_table = two_table[1]
+    feature_table = unfold_map_to_tables(full_data['features'], table_height, 35)
     assert np.max(feature_table) < np.inf
     
     return feature_table
@@ -321,12 +339,43 @@ def loaddata():
 # main method
 ##############################################################################
 def main():
-    feature_table = loaddata()
-    t1 = time.time()
-    a = retrieval_process(21, feature_table, 200, steps=[0])
-    print a
-    t2 = time.time()
-    print 'stage 1 takes %f s' % (t2-t1)   
+    full_data = load_obj(INPUTDIR + 'descriptor_zernike_shapecount_907_timedate__1241_1211')
+    feature_table = loaddata(full_data)
+    query_id = 6
+#    print 'started'
+#    t1 = time.time()
+#    a = retrieval_process(query_id, feature_table, 907, steps=[0,1,2,3])
+#    t2 = time.time()
+#    print 'comparison takes %f s to run' % (t2-t1)
     
+#    compare_and_reject2(query_id, feature_table, [],5,[],[],[])
+#    indices = np.loadtxt('indexlist1.txt',dtype='int16',delimiter=',').tolist()
+    
+    t1 = time.time()
+    compare_and_reject(query_id,feature_table,np.arange(907),8,
+                           np.array([0,1,2]),np.array([3,4]),range(10))  
+    t2 = time.time()
+    b = np.zeros(907)
+    print '--------------'
+    
+    t3 = time.time()
+    compare_and_reject2(query_id,feature_table,np.arange(907),8,
+                            np.array([0,1,2]),np.array([3,4]),b)  
+    t4 = time.time()
+    print b
+    
+    print (t2-t1),(t4-t3)
+    
+    
+#    indices = full_data['mesh_list']
+#    meshes = [readfrompsb(indices[query_id])]
+#    for i in a:
+#        meshes.append(readfrompsb(indices[i]))
+#        
+#    for m in meshes:
+#        mlab.figure()
+#        mlab.triangular_mesh(m.verts[:,0],m.verts[:,1],m.verts[:,2],m.faces)
+#    
 if __name__ == '__main__':
     main()
+    pass

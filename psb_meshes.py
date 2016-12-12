@@ -304,9 +304,9 @@ if __name__ == '__main__':
 #    zernike1 = image_descriptor.ZernikeMoments(degree=4) # 8 coeffs
 #    zernike2 = image_descriptor.ZernikeMoments(degree=6) # 15 coeffs
     zernike3 = image_descriptor.ZernikeMoments(degree=10) # 35 coeffs
-    ids = np.loadtxt(PSB_INDICES_FILE,dtype='int16',delimiter=',').tolist()
-#    main_process(indices.tolist(),zernike3,\
-#    use_parallel_projection=USEPALLELPROJECTION,\
-#    maxthread=MAX_THREAD,interruptable=INTERRUPTABLE)
+#    ids = np.loadtxt(PSB_INDICES_FILE,dtype='int16',delimiter=',').tolist()
+    main_process(indices,zernike3,\
+    use_parallel_projection=USEPALLELPROJECTION,\
+    maxthread=50,interruptable=INTERRUPTABLE)
 
-    main_process(ids,zernike3,saveimg=True, savedimgdir='temp2\\', savedimgformat='png')
+#    main_process(ids,zernike3,saveimg=True, savedimgdir='temp2\\', savedimgformat='png')

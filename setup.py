@@ -2,6 +2,8 @@
 """
 Created on Sun Dec 11 16:08:39 2016
 
+run with `python setup.py build_ext --inplace`
+
 @author: chenym
 """
 
@@ -11,6 +13,6 @@ import numpy
 
 setup(
     name = 'compare in Cython',
-    ext_modules = cythonize("partialcomparison.pyx"),
+    ext_modules = cythonize(["partialcomparison.pyx","fullcomparison.pyx"]),
     include_dirs=[numpy.get_include()]
 )

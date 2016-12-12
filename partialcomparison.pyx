@@ -7,36 +7,43 @@ Created on Sun Dec 11 16:05:50 2016
 import numpy as np
 cimport numpy as np
 from libc.math cimport fabs
+cimport cython
 
-def compare_and_reject(int query_id, np.ndarray features, np.ndarray ids_of_set, 
-                       int number_of_coeff, np.ndarray image_selection, 
-                       np.ndarray lfs_of_queries, np.ndarray scores):
-#    cdef double [:, :] features_view = features
+ctypedef np.float_t DTYPE_t
 
-    cdef int set_size = ids_of_set.shape[0]
-    cdef int image_size = image_selection.shape[0]
-    cdef int lfs_size_q = lfs_of_queries.shape[0]
-    cdef int i,j,k,i2,j2
-    cdef int shape_id,image_id,lf_id_q
-    cdef double low_score, new_score, curr_score, summ
-    cdef double z0,z1
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.nonecheck(False)
+def compare_partial(np.ndarray[DTYPE_t, ndim=2] subset_query, 
+                    np.ndarray[DTYPE_t, ndim=2] subset_other, 
+                    int query_lf_size, int other_set_size, int other_lf_size, 
+                    int image_size, np.ndarray[DTYPE_t, ndim=1] scores):
+
+    cdef int number_of_coeff = subset_query.shape[1]
+    cdef int i,j,k,i2,j2,t1,t2
     
-    for i in range(set_size):
-        shape_id = ids_of_set[i]
-        if shape_id == query_id:
-            scores[i] = -1
-            continue
+    cdef double z0,z1
+
+    assert other_set_size == scores.shape[0]
+    assert query_lf_size*image_size == subset_query.shape[0]
+    assert other_lf_size*image_size*other_set_size == subset_other.shape[0]
+    
+    cdef double low_score, curr_score
+        
+    for i in range(other_set_size):
         low_score = -1
-        for j in range(lfs_size_q):
-            lf_id_q = lfs_of_queries[j]
-            for k in range(10):
+        
+        for j in range(query_lf_size):
+            for k in range(other_lf_size):
                 curr_score = 0
                 for i2 in range(image_size):
-                    image_id = image_selection[i2]
-                    for j2 in range(number_of_coeff): # hideous...
-                        z0 = features[image_id+query_id*100+lf_id_q*10,j2]
-                        z1 = features[image_id+shape_id*100+k*10,j2]
+                    t1 = j*image_size
+                    t2 = k*image_size+i*other_lf_size*image_size
+                    for j2 in range(number_of_coeff):
+                        z0 = subset_query[i2+t1,j2]
+                        z1 = subset_other[i2+t2,j2]
                         curr_score += fabs(z0-z1)
                 if low_score < 0 or curr_score < low_score:
                     low_score = curr_score
+
         scores[i] = low_score

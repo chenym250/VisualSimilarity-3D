@@ -665,6 +665,42 @@ static const char *__pyx_f[] = {
   "__init__.pxd",
   "type.pxd",
 };
+/* BufferFormatStructs.proto */
+#define IS_UNSIGNED(type) (((type) -1) > 0)
+struct __Pyx_StructField_;
+#define __PYX_BUF_FLAGS_PACKED_STRUCT (1 << 0)
+typedef struct {
+  const char* name;
+  struct __Pyx_StructField_* fields;
+  size_t size;
+  size_t arraysize[8];
+  int ndim;
+  char typegroup;
+  char is_unsigned;
+  int flags;
+} __Pyx_TypeInfo;
+typedef struct __Pyx_StructField_ {
+  __Pyx_TypeInfo* type;
+  const char* name;
+  size_t offset;
+} __Pyx_StructField;
+typedef struct {
+  __Pyx_StructField* field;
+  size_t parent_offset;
+} __Pyx_BufFmt_StackElem;
+typedef struct {
+  __Pyx_StructField root;
+  __Pyx_BufFmt_StackElem* head;
+  size_t fmt_offset;
+  size_t new_count, enc_count;
+  size_t struct_alignment;
+  int is_complex;
+  char enc_type;
+  char new_packmode;
+  char enc_packmode;
+  char is_valid_array;
+} __Pyx_BufFmt_Context;
+
 
 /* "../../../../../Anaconda2/lib/site-packages/Cython/Includes/numpy/__init__.pxd":725
  * # in Cython to enable them only on the right systems.
@@ -854,6 +890,15 @@ typedef npy_double __pyx_t_5numpy_double_t;
  * ctypedef npy_cfloat      cfloat_t
  */
 typedef npy_longdouble __pyx_t_5numpy_longdouble_t;
+
+/* "partialcomparison.pyx":12
+ * cimport cython
+ * 
+ * ctypedef np.float_t DTYPE_t             # <<<<<<<<<<<<<<
+ * 
+ * @cython.boundscheck(False)
+ */
+typedef __pyx_t_5numpy_float_t __pyx_t_17partialcomparison_DTYPE_t;
 /* Declarations.proto */
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -1016,45 +1061,17 @@ static int __Pyx_ParseOptionalKeywords(PyObject *kwds, PyObject **argnames[],\
 static CYTHON_INLINE int __Pyx_ArgTypeTest(PyObject *obj, PyTypeObject *type, int none_allowed,
     const char *name, int exact);
 
-/* GetItemInt.proto */
-#define __Pyx_GetItemInt(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_GetItemInt_Fast(o, (Py_ssize_t)i, is_list, wraparound, boundscheck) :\
-    (is_list ? (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL) :\
-               __Pyx_GetItemInt_Generic(o, to_py_func(i))))
-#define __Pyx_GetItemInt_List(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_GetItemInt_List_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
-    (PyErr_SetString(PyExc_IndexError, "list index out of range"), (PyObject*)NULL))
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
-                                                              int wraparound, int boundscheck);
-#define __Pyx_GetItemInt_Tuple(o, i, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_GetItemInt_Tuple_Fast(o, (Py_ssize_t)i, wraparound, boundscheck) :\
-    (PyErr_SetString(PyExc_IndexError, "tuple index out of range"), (PyObject*)NULL))
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
-                                                              int wraparound, int boundscheck);
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j);
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i,
-                                                     int is_list, int wraparound, int boundscheck);
+/* BufferFormatCheck.proto */
+static CYTHON_INLINE int  __Pyx_GetBufferAndValidate(Py_buffer* buf, PyObject* obj,
+    __Pyx_TypeInfo* dtype, int flags, int nd, int cast, __Pyx_BufFmt_StackElem* stack);
+static CYTHON_INLINE void __Pyx_SafeReleaseBuffer(Py_buffer* info);
+static const char* __Pyx_BufFmt_CheckString(__Pyx_BufFmt_Context* ctx, const char* ts);
+static void __Pyx_BufFmt_Init(__Pyx_BufFmt_Context* ctx,
+                              __Pyx_BufFmt_StackElem* stack,
+                              __Pyx_TypeInfo* type); // PROTO
 
-/* SetItemInt.proto */
-#define __Pyx_SetItemInt(o, i, v, type, is_signed, to_py_func, is_list, wraparound, boundscheck)\
-    (__Pyx_fits_Py_ssize_t(i, type, is_signed) ?\
-    __Pyx_SetItemInt_Fast(o, (Py_ssize_t)i, v, is_list, wraparound, boundscheck) :\
-    (is_list ? (PyErr_SetString(PyExc_IndexError, "list assignment index out of range"), -1) :\
-               __Pyx_SetItemInt_Generic(o, to_py_func(i), v)))
-static CYTHON_INLINE int __Pyx_SetItemInt_Generic(PyObject *o, PyObject *j, PyObject *v);
-static CYTHON_INLINE int __Pyx_SetItemInt_Fast(PyObject *o, Py_ssize_t i, PyObject *v,
-                                               int is_list, int wraparound, int boundscheck);
-
-/* PyObjectCall.proto */
-#if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
-#else
-#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
-#endif
-
+#define __Pyx_BufPtrStrided2d(type, buf, i0, s0, i1, s1) (type)((char*)buf + i0 * s0 + i1 * s1)
+#define __Pyx_BufPtrStrided1d(type, buf, i0, s0) (type)((char*)buf + i0 * s0)
 /* PyThreadStateGet.proto */
 #if CYTHON_FAST_THREAD_STATE
 #define __Pyx_PyThreadState_declare  PyThreadState *__pyx_tstate;
@@ -1077,6 +1094,13 @@ static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject 
 #define __Pyx_ErrFetchWithState(type, value, tb)  PyErr_Fetch(type, value, tb)
 #define __Pyx_ErrRestore(type, value, tb)  PyErr_Restore(type, value, tb)
 #define __Pyx_ErrFetch(type, value, tb)  PyErr_Fetch(type, value, tb)
+#endif
+
+/* PyObjectCall.proto */
+#if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw);
+#else
+#define __Pyx_PyObject_Call(func, arg, kw) PyObject_Call(func, arg, kw)
 #endif
 
 /* RaiseException.proto */
@@ -1164,11 +1188,35 @@ static void __pyx_insert_code_object(int code_line, PyCodeObject* code_object);
 static void __Pyx_AddTraceback(const char *funcname, int c_line,
                                int py_line, const char *filename);
 
-/* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
+/* BufferStructDeclare.proto */
+typedef struct {
+  Py_ssize_t shape, strides, suboffsets;
+} __Pyx_Buf_DimInfo;
+typedef struct {
+  size_t refcount;
+  Py_buffer pybuffer;
+} __Pyx_Buffer;
+typedef struct {
+  __Pyx_Buffer *rcbuffer;
+  char *data;
+  __Pyx_Buf_DimInfo diminfo[8];
+} __Pyx_LocalBuf_ND;
+
+#if PY_MAJOR_VERSION < 3
+    static int __Pyx_GetBuffer(PyObject *obj, Py_buffer *view, int flags);
+    static void __Pyx_ReleaseBuffer(Py_buffer *view);
+#else
+    #define __Pyx_GetBuffer PyObject_GetBuffer
+    #define __Pyx_ReleaseBuffer PyBuffer_Release
+#endif
+
+
+/* None.proto */
+static Py_ssize_t __Pyx_zeros[] = {0, 0, 0, 0, 0, 0, 0, 0};
+static Py_ssize_t __Pyx_minusones[] = {-1, -1, -1, -1, -1, -1, -1, -1};
 
 /* CIntToPy.proto */
-static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_int(int value);
 
 /* RealImag.proto */
 #if CYTHON_CCOMPLEX
@@ -1274,6 +1322,9 @@ static CYTHON_INLINE PyObject* __Pyx_PyInt_From_enum__NPY_TYPES(enum NPY_TYPES v
 /* CIntFromPy.proto */
 static CYTHON_INLINE int __Pyx_PyInt_As_int(PyObject *);
 
+/* CIntToPy.proto */
+static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value);
+
 /* CIntFromPy.proto */
 static CYTHON_INLINE long __Pyx_PyInt_As_long(PyObject *);
 
@@ -1330,7 +1381,10 @@ static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, cha
 
 /* Module declarations from 'libc.math' */
 
+/* Module declarations from 'cython' */
+
 /* Module declarations from 'partialcomparison' */
+static __Pyx_TypeInfo __Pyx_TypeInfo_nn___pyx_t_17partialcomparison_DTYPE_t = { "DTYPE_t", NULL, sizeof(__pyx_t_17partialcomparison_DTYPE_t), { 0 }, 0, 'R', 0, 0 };
 #define __Pyx_MODULE_NAME "partialcomparison"
 int __pyx_module_is_main_partialcomparison = 0;
 
@@ -1345,35 +1399,30 @@ static const char __pyx_k_k[] = "k";
 static const char __pyx_k_i2[] = "i2";
 static const char __pyx_k_j2[] = "j2";
 static const char __pyx_k_np[] = "np";
+static const char __pyx_k_t1[] = "t1";
+static const char __pyx_k_t2[] = "t2";
 static const char __pyx_k_z0[] = "z0";
 static const char __pyx_k_z1[] = "z1";
 static const char __pyx_k_main[] = "__main__";
-static const char __pyx_k_summ[] = "summ";
 static const char __pyx_k_test[] = "__test__";
 static const char __pyx_k_numpy[] = "numpy";
 static const char __pyx_k_range[] = "range";
 static const char __pyx_k_import[] = "__import__";
 static const char __pyx_k_scores[] = "scores";
-static const char __pyx_k_lf_id_q[] = "lf_id_q";
-static const char __pyx_k_features[] = "features";
-static const char __pyx_k_image_id[] = "image_id";
-static const char __pyx_k_query_id[] = "query_id";
-static const char __pyx_k_set_size[] = "set_size";
-static const char __pyx_k_shape_id[] = "shape_id";
 static const char __pyx_k_low_score[] = "low_score";
-static const char __pyx_k_new_score[] = "new_score";
 static const char __pyx_k_ValueError[] = "ValueError";
 static const char __pyx_k_curr_score[] = "curr_score";
-static const char __pyx_k_ids_of_set[] = "ids_of_set";
 static const char __pyx_k_image_size[] = "image_size";
-static const char __pyx_k_lfs_size_q[] = "lfs_size_q";
 static const char __pyx_k_ImportError[] = "ImportError";
 static const char __pyx_k_RuntimeError[] = "RuntimeError";
-static const char __pyx_k_lfs_of_queries[] = "lfs_of_queries";
-static const char __pyx_k_image_selection[] = "image_selection";
+static const char __pyx_k_subset_other[] = "subset_other";
+static const char __pyx_k_subset_query[] = "subset_query";
+static const char __pyx_k_other_lf_size[] = "other_lf_size";
+static const char __pyx_k_query_lf_size[] = "query_lf_size";
+static const char __pyx_k_other_set_size[] = "other_set_size";
+static const char __pyx_k_compare_partial[] = "compare_partial";
 static const char __pyx_k_number_of_coeff[] = "number_of_coeff";
 static const char __pyx_k_partialcomparison[] = "partialcomparison";
-static const char __pyx_k_compare_and_reject[] = "compare_and_reject";
 static const char __pyx_k_ndarray_is_not_C_contiguous[] = "ndarray is not C contiguous";
 static const char __pyx_k_Created_on_Sun_Dec_11_16_05_50[] = "\nCreated on Sun Dec 11 16:05:50 2016\n\n@author: chenym\n";
 static const char __pyx_k_numpy_core_multiarray_failed_to[] = "numpy.core.multiarray failed to import";
@@ -1391,47 +1440,41 @@ static PyObject *__pyx_n_s_ImportError;
 static PyObject *__pyx_kp_u_Non_native_byte_order_not_suppor;
 static PyObject *__pyx_n_s_RuntimeError;
 static PyObject *__pyx_n_s_ValueError;
-static PyObject *__pyx_n_s_compare_and_reject;
+static PyObject *__pyx_n_s_compare_partial;
 static PyObject *__pyx_n_s_curr_score;
-static PyObject *__pyx_n_s_features;
 static PyObject *__pyx_n_s_i;
 static PyObject *__pyx_n_s_i2;
-static PyObject *__pyx_n_s_ids_of_set;
-static PyObject *__pyx_n_s_image_id;
-static PyObject *__pyx_n_s_image_selection;
 static PyObject *__pyx_n_s_image_size;
 static PyObject *__pyx_n_s_import;
 static PyObject *__pyx_n_s_j;
 static PyObject *__pyx_n_s_j2;
 static PyObject *__pyx_n_s_k;
-static PyObject *__pyx_n_s_lf_id_q;
-static PyObject *__pyx_n_s_lfs_of_queries;
-static PyObject *__pyx_n_s_lfs_size_q;
 static PyObject *__pyx_n_s_low_score;
 static PyObject *__pyx_n_s_main;
 static PyObject *__pyx_kp_u_ndarray_is_not_C_contiguous;
 static PyObject *__pyx_kp_u_ndarray_is_not_Fortran_contiguou;
-static PyObject *__pyx_n_s_new_score;
 static PyObject *__pyx_n_s_np;
 static PyObject *__pyx_n_s_number_of_coeff;
 static PyObject *__pyx_n_s_numpy;
 static PyObject *__pyx_kp_s_numpy_core_multiarray_failed_to;
 static PyObject *__pyx_kp_s_numpy_core_umath_failed_to_impor;
+static PyObject *__pyx_n_s_other_lf_size;
+static PyObject *__pyx_n_s_other_set_size;
 static PyObject *__pyx_n_s_partialcomparison;
-static PyObject *__pyx_n_s_query_id;
+static PyObject *__pyx_n_s_query_lf_size;
 static PyObject *__pyx_n_s_range;
 static PyObject *__pyx_n_s_scores;
-static PyObject *__pyx_n_s_set_size;
-static PyObject *__pyx_n_s_shape_id;
-static PyObject *__pyx_n_s_summ;
+static PyObject *__pyx_n_s_subset_other;
+static PyObject *__pyx_n_s_subset_query;
+static PyObject *__pyx_n_s_t1;
+static PyObject *__pyx_n_s_t2;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_kp_u_unknown_dtype_code_in_numpy_pxd;
 static PyObject *__pyx_n_s_z0;
 static PyObject *__pyx_n_s_z1;
-static PyObject *__pyx_pf_17partialcomparison_compare_and_reject(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_query_id, PyArrayObject *__pyx_v_features, PyArrayObject *__pyx_v_ids_of_set, int __pyx_v_number_of_coeff, PyArrayObject *__pyx_v_image_selection, PyArrayObject *__pyx_v_lfs_of_queries, PyArrayObject *__pyx_v_scores); /* proto */
+static PyObject *__pyx_pf_17partialcomparison_compare_partial(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_subset_query, PyArrayObject *__pyx_v_subset_other, int __pyx_v_query_lf_size, int __pyx_v_other_set_size, int __pyx_v_other_lf_size, int __pyx_v_image_size, PyArrayObject *__pyx_v_scores); /* proto */
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags); /* proto */
 static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info); /* proto */
-static PyObject *__pyx_int_neg_1;
 static PyObject *__pyx_tuple_;
 static PyObject *__pyx_tuple__2;
 static PyObject *__pyx_tuple__3;
@@ -1444,30 +1487,30 @@ static PyObject *__pyx_tuple__9;
 static PyObject *__pyx_tuple__10;
 static PyObject *__pyx_codeobj__11;
 
-/* "partialcomparison.pyx":11
- * from libc.math cimport fabs
- * 
- * def compare_and_reject(int query_id, np.ndarray features, np.ndarray ids_of_set,             # <<<<<<<<<<<<<<
- *                        int number_of_coeff, np.ndarray image_selection,
- *                        np.ndarray lfs_of_queries, np.ndarray scores):
+/* "partialcomparison.pyx":17
+ * @cython.wraparound(False)
+ * @cython.nonecheck(False)
+ * def compare_partial(np.ndarray[DTYPE_t, ndim=2] subset_query,             # <<<<<<<<<<<<<<
+ *                     np.ndarray[DTYPE_t, ndim=2] subset_other,
+ *                     int query_lf_size, int other_set_size, int other_lf_size,
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_17partialcomparison_1compare_and_reject(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
-static PyMethodDef __pyx_mdef_17partialcomparison_1compare_and_reject = {"compare_and_reject", (PyCFunction)__pyx_pw_17partialcomparison_1compare_and_reject, METH_VARARGS|METH_KEYWORDS, 0};
-static PyObject *__pyx_pw_17partialcomparison_1compare_and_reject(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
-  int __pyx_v_query_id;
-  PyArrayObject *__pyx_v_features = 0;
-  PyArrayObject *__pyx_v_ids_of_set = 0;
-  int __pyx_v_number_of_coeff;
-  PyArrayObject *__pyx_v_image_selection = 0;
-  PyArrayObject *__pyx_v_lfs_of_queries = 0;
+static PyObject *__pyx_pw_17partialcomparison_1compare_partial(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds); /*proto*/
+static PyMethodDef __pyx_mdef_17partialcomparison_1compare_partial = {"compare_partial", (PyCFunction)__pyx_pw_17partialcomparison_1compare_partial, METH_VARARGS|METH_KEYWORDS, 0};
+static PyObject *__pyx_pw_17partialcomparison_1compare_partial(PyObject *__pyx_self, PyObject *__pyx_args, PyObject *__pyx_kwds) {
+  PyArrayObject *__pyx_v_subset_query = 0;
+  PyArrayObject *__pyx_v_subset_other = 0;
+  int __pyx_v_query_lf_size;
+  int __pyx_v_other_set_size;
+  int __pyx_v_other_lf_size;
+  int __pyx_v_image_size;
   PyArrayObject *__pyx_v_scores = 0;
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
-  __Pyx_RefNannySetupContext("compare_and_reject (wrapper)", 0);
+  __Pyx_RefNannySetupContext("compare_partial (wrapper)", 0);
   {
-    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_query_id,&__pyx_n_s_features,&__pyx_n_s_ids_of_set,&__pyx_n_s_number_of_coeff,&__pyx_n_s_image_selection,&__pyx_n_s_lfs_of_queries,&__pyx_n_s_scores,0};
+    static PyObject **__pyx_pyargnames[] = {&__pyx_n_s_subset_query,&__pyx_n_s_subset_other,&__pyx_n_s_query_lf_size,&__pyx_n_s_other_set_size,&__pyx_n_s_other_lf_size,&__pyx_n_s_image_size,&__pyx_n_s_scores,0};
     PyObject* values[7] = {0,0,0,0,0,0,0};
     if (unlikely(__pyx_kwds)) {
       Py_ssize_t kw_args;
@@ -1486,41 +1529,41 @@ static PyObject *__pyx_pw_17partialcomparison_1compare_and_reject(PyObject *__py
       kw_args = PyDict_Size(__pyx_kwds);
       switch (pos_args) {
         case  0:
-        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_query_id)) != 0)) kw_args--;
+        if (likely((values[0] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_subset_query)) != 0)) kw_args--;
         else goto __pyx_L5_argtuple_error;
         case  1:
-        if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_features)) != 0)) kw_args--;
+        if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_subset_other)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("compare_and_reject", 1, 7, 7, 1); __PYX_ERR(0, 11, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("compare_partial", 1, 7, 7, 1); __PYX_ERR(0, 17, __pyx_L3_error)
         }
         case  2:
-        if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_ids_of_set)) != 0)) kw_args--;
+        if (likely((values[2] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_query_lf_size)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("compare_and_reject", 1, 7, 7, 2); __PYX_ERR(0, 11, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("compare_partial", 1, 7, 7, 2); __PYX_ERR(0, 17, __pyx_L3_error)
         }
         case  3:
-        if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_number_of_coeff)) != 0)) kw_args--;
+        if (likely((values[3] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_other_set_size)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("compare_and_reject", 1, 7, 7, 3); __PYX_ERR(0, 11, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("compare_partial", 1, 7, 7, 3); __PYX_ERR(0, 17, __pyx_L3_error)
         }
         case  4:
-        if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_image_selection)) != 0)) kw_args--;
+        if (likely((values[4] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_other_lf_size)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("compare_and_reject", 1, 7, 7, 4); __PYX_ERR(0, 11, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("compare_partial", 1, 7, 7, 4); __PYX_ERR(0, 17, __pyx_L3_error)
         }
         case  5:
-        if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_lfs_of_queries)) != 0)) kw_args--;
+        if (likely((values[5] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_image_size)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("compare_and_reject", 1, 7, 7, 5); __PYX_ERR(0, 11, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("compare_partial", 1, 7, 7, 5); __PYX_ERR(0, 17, __pyx_L3_error)
         }
         case  6:
         if (likely((values[6] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_scores)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("compare_and_reject", 1, 7, 7, 6); __PYX_ERR(0, 11, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("compare_partial", 1, 7, 7, 6); __PYX_ERR(0, 17, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "compare_and_reject") < 0)) __PYX_ERR(0, 11, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "compare_partial") < 0)) __PYX_ERR(0, 17, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 7) {
       goto __pyx_L5_argtuple_error;
@@ -1533,28 +1576,26 @@ static PyObject *__pyx_pw_17partialcomparison_1compare_and_reject(PyObject *__py
       values[5] = PyTuple_GET_ITEM(__pyx_args, 5);
       values[6] = PyTuple_GET_ITEM(__pyx_args, 6);
     }
-    __pyx_v_query_id = __Pyx_PyInt_As_int(values[0]); if (unlikely((__pyx_v_query_id == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 11, __pyx_L3_error)
-    __pyx_v_features = ((PyArrayObject *)values[1]);
-    __pyx_v_ids_of_set = ((PyArrayObject *)values[2]);
-    __pyx_v_number_of_coeff = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_number_of_coeff == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 12, __pyx_L3_error)
-    __pyx_v_image_selection = ((PyArrayObject *)values[4]);
-    __pyx_v_lfs_of_queries = ((PyArrayObject *)values[5]);
+    __pyx_v_subset_query = ((PyArrayObject *)values[0]);
+    __pyx_v_subset_other = ((PyArrayObject *)values[1]);
+    __pyx_v_query_lf_size = __Pyx_PyInt_As_int(values[2]); if (unlikely((__pyx_v_query_lf_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L3_error)
+    __pyx_v_other_set_size = __Pyx_PyInt_As_int(values[3]); if (unlikely((__pyx_v_other_set_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L3_error)
+    __pyx_v_other_lf_size = __Pyx_PyInt_As_int(values[4]); if (unlikely((__pyx_v_other_lf_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 19, __pyx_L3_error)
+    __pyx_v_image_size = __Pyx_PyInt_As_int(values[5]); if (unlikely((__pyx_v_image_size == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 20, __pyx_L3_error)
     __pyx_v_scores = ((PyArrayObject *)values[6]);
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("compare_and_reject", 1, 7, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 11, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("compare_partial", 1, 7, 7, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 17, __pyx_L3_error)
   __pyx_L3_error:;
-  __Pyx_AddTraceback("partialcomparison.compare_and_reject", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  __Pyx_AddTraceback("partialcomparison.compare_partial", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
   return NULL;
   __pyx_L4_argument_unpacking_done:;
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_features), __pyx_ptype_5numpy_ndarray, 1, "features", 0))) __PYX_ERR(0, 11, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_ids_of_set), __pyx_ptype_5numpy_ndarray, 1, "ids_of_set", 0))) __PYX_ERR(0, 11, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_image_selection), __pyx_ptype_5numpy_ndarray, 1, "image_selection", 0))) __PYX_ERR(0, 12, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_lfs_of_queries), __pyx_ptype_5numpy_ndarray, 1, "lfs_of_queries", 0))) __PYX_ERR(0, 13, __pyx_L1_error)
-  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_scores), __pyx_ptype_5numpy_ndarray, 1, "scores", 0))) __PYX_ERR(0, 13, __pyx_L1_error)
-  __pyx_r = __pyx_pf_17partialcomparison_compare_and_reject(__pyx_self, __pyx_v_query_id, __pyx_v_features, __pyx_v_ids_of_set, __pyx_v_number_of_coeff, __pyx_v_image_selection, __pyx_v_lfs_of_queries, __pyx_v_scores);
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_subset_query), __pyx_ptype_5numpy_ndarray, 1, "subset_query", 0))) __PYX_ERR(0, 17, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_subset_other), __pyx_ptype_5numpy_ndarray, 1, "subset_other", 0))) __PYX_ERR(0, 18, __pyx_L1_error)
+  if (unlikely(!__Pyx_ArgTypeTest(((PyObject *)__pyx_v_scores), __pyx_ptype_5numpy_ndarray, 1, "scores", 0))) __PYX_ERR(0, 20, __pyx_L1_error)
+  __pyx_r = __pyx_pf_17partialcomparison_compare_partial(__pyx_self, __pyx_v_subset_query, __pyx_v_subset_other, __pyx_v_query_lf_size, __pyx_v_other_set_size, __pyx_v_other_lf_size, __pyx_v_image_size, __pyx_v_scores);
 
   /* function exit code */
   goto __pyx_L0;
@@ -1565,27 +1606,30 @@ static PyObject *__pyx_pw_17partialcomparison_1compare_and_reject(PyObject *__py
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_17partialcomparison_compare_and_reject(CYTHON_UNUSED PyObject *__pyx_self, int __pyx_v_query_id, PyArrayObject *__pyx_v_features, PyArrayObject *__pyx_v_ids_of_set, int __pyx_v_number_of_coeff, PyArrayObject *__pyx_v_image_selection, PyArrayObject *__pyx_v_lfs_of_queries, PyArrayObject *__pyx_v_scores) {
-  int __pyx_v_set_size;
-  int __pyx_v_image_size;
-  int __pyx_v_lfs_size_q;
+static PyObject *__pyx_pf_17partialcomparison_compare_partial(CYTHON_UNUSED PyObject *__pyx_self, PyArrayObject *__pyx_v_subset_query, PyArrayObject *__pyx_v_subset_other, int __pyx_v_query_lf_size, int __pyx_v_other_set_size, int __pyx_v_other_lf_size, int __pyx_v_image_size, PyArrayObject *__pyx_v_scores) {
+  int __pyx_v_number_of_coeff;
   int __pyx_v_i;
   int __pyx_v_j;
   int __pyx_v_k;
   int __pyx_v_i2;
   int __pyx_v_j2;
-  int __pyx_v_shape_id;
-  int __pyx_v_image_id;
-  int __pyx_v_lf_id_q;
-  double __pyx_v_low_score;
-  double __pyx_v_curr_score;
+  int __pyx_v_t1;
+  int __pyx_v_t2;
   double __pyx_v_z0;
   double __pyx_v_z1;
+  double __pyx_v_low_score;
+  double __pyx_v_curr_score;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_scores;
+  __Pyx_Buffer __pyx_pybuffer_scores;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_subset_other;
+  __Pyx_Buffer __pyx_pybuffer_subset_other;
+  __Pyx_LocalBuf_ND __pyx_pybuffernd_subset_query;
+  __Pyx_Buffer __pyx_pybuffer_subset_query;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   int __pyx_t_1;
   int __pyx_t_2;
-  PyObject *__pyx_t_3 = NULL;
+  int __pyx_t_3;
   int __pyx_t_4;
   int __pyx_t_5;
   int __pyx_t_6;
@@ -1593,243 +1637,215 @@ static PyObject *__pyx_pf_17partialcomparison_compare_and_reject(CYTHON_UNUSED P
   int __pyx_t_8;
   int __pyx_t_9;
   int __pyx_t_10;
-  int __pyx_t_11;
-  PyObject *__pyx_t_12 = NULL;
-  PyObject *__pyx_t_13 = NULL;
-  double __pyx_t_14;
+  Py_ssize_t __pyx_t_11;
+  Py_ssize_t __pyx_t_12;
+  Py_ssize_t __pyx_t_13;
+  Py_ssize_t __pyx_t_14;
   int __pyx_t_15;
-  __Pyx_RefNannySetupContext("compare_and_reject", 0);
+  int __pyx_t_16;
+  Py_ssize_t __pyx_t_17;
+  __Pyx_RefNannySetupContext("compare_partial", 0);
+  __pyx_pybuffer_subset_query.pybuffer.buf = NULL;
+  __pyx_pybuffer_subset_query.refcount = 0;
+  __pyx_pybuffernd_subset_query.data = NULL;
+  __pyx_pybuffernd_subset_query.rcbuffer = &__pyx_pybuffer_subset_query;
+  __pyx_pybuffer_subset_other.pybuffer.buf = NULL;
+  __pyx_pybuffer_subset_other.refcount = 0;
+  __pyx_pybuffernd_subset_other.data = NULL;
+  __pyx_pybuffernd_subset_other.rcbuffer = &__pyx_pybuffer_subset_other;
+  __pyx_pybuffer_scores.pybuffer.buf = NULL;
+  __pyx_pybuffer_scores.refcount = 0;
+  __pyx_pybuffernd_scores.data = NULL;
+  __pyx_pybuffernd_scores.rcbuffer = &__pyx_pybuffer_scores;
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_subset_query.rcbuffer->pybuffer, (PyObject*)__pyx_v_subset_query, &__Pyx_TypeInfo_nn___pyx_t_17partialcomparison_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 17, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_subset_query.diminfo[0].strides = __pyx_pybuffernd_subset_query.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_subset_query.diminfo[0].shape = __pyx_pybuffernd_subset_query.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_subset_query.diminfo[1].strides = __pyx_pybuffernd_subset_query.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_subset_query.diminfo[1].shape = __pyx_pybuffernd_subset_query.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_subset_other.rcbuffer->pybuffer, (PyObject*)__pyx_v_subset_other, &__Pyx_TypeInfo_nn___pyx_t_17partialcomparison_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES, 2, 0, __pyx_stack) == -1)) __PYX_ERR(0, 17, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_subset_other.diminfo[0].strides = __pyx_pybuffernd_subset_other.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_subset_other.diminfo[0].shape = __pyx_pybuffernd_subset_other.rcbuffer->pybuffer.shape[0]; __pyx_pybuffernd_subset_other.diminfo[1].strides = __pyx_pybuffernd_subset_other.rcbuffer->pybuffer.strides[1]; __pyx_pybuffernd_subset_other.diminfo[1].shape = __pyx_pybuffernd_subset_other.rcbuffer->pybuffer.shape[1];
+  {
+    __Pyx_BufFmt_StackElem __pyx_stack[1];
+    if (unlikely(__Pyx_GetBufferAndValidate(&__pyx_pybuffernd_scores.rcbuffer->pybuffer, (PyObject*)__pyx_v_scores, &__Pyx_TypeInfo_nn___pyx_t_17partialcomparison_DTYPE_t, PyBUF_FORMAT| PyBUF_STRIDES| PyBUF_WRITABLE, 1, 0, __pyx_stack) == -1)) __PYX_ERR(0, 17, __pyx_L1_error)
+  }
+  __pyx_pybuffernd_scores.diminfo[0].strides = __pyx_pybuffernd_scores.rcbuffer->pybuffer.strides[0]; __pyx_pybuffernd_scores.diminfo[0].shape = __pyx_pybuffernd_scores.rcbuffer->pybuffer.shape[0];
 
-  /* "partialcomparison.pyx":16
- * #    cdef double [:, :] features_view = features
+  /* "partialcomparison.pyx":22
+ *                     int image_size, np.ndarray[DTYPE_t, ndim=1] scores):
  * 
- *     cdef int set_size = ids_of_set.shape[0]             # <<<<<<<<<<<<<<
- *     cdef int image_size = image_selection.shape[0]
- *     cdef int lfs_size_q = lfs_of_queries.shape[0]
- */
-  __pyx_v_set_size = (__pyx_v_ids_of_set->dimensions[0]);
-
-  /* "partialcomparison.pyx":17
+ *     cdef int number_of_coeff = subset_query.shape[1]             # <<<<<<<<<<<<<<
+ *     cdef int i,j,k,i2,j2,t1,t2
  * 
- *     cdef int set_size = ids_of_set.shape[0]
- *     cdef int image_size = image_selection.shape[0]             # <<<<<<<<<<<<<<
- *     cdef int lfs_size_q = lfs_of_queries.shape[0]
- *     cdef int i,j,k,i2,j2
  */
-  __pyx_v_image_size = (__pyx_v_image_selection->dimensions[0]);
+  __pyx_v_number_of_coeff = (__pyx_v_subset_query->dimensions[1]);
 
-  /* "partialcomparison.pyx":18
- *     cdef int set_size = ids_of_set.shape[0]
- *     cdef int image_size = image_selection.shape[0]
- *     cdef int lfs_size_q = lfs_of_queries.shape[0]             # <<<<<<<<<<<<<<
- *     cdef int i,j,k,i2,j2
- *     cdef int shape_id,image_id,lf_id_q
- */
-  __pyx_v_lfs_size_q = (__pyx_v_lfs_of_queries->dimensions[0]);
-
-  /* "partialcomparison.pyx":24
+  /* "partialcomparison.pyx":27
  *     cdef double z0,z1
  * 
- *     for i in range(set_size):             # <<<<<<<<<<<<<<
- *         shape_id = ids_of_set[i]
- *         if shape_id == query_id:
+ *     assert other_set_size == scores.shape[0]             # <<<<<<<<<<<<<<
+ *     assert query_lf_size*image_size == subset_query.shape[0]
+ *     assert other_lf_size*image_size*other_set_size == subset_other.shape[0]
  */
-  __pyx_t_1 = __pyx_v_set_size;
+  #ifndef CYTHON_WITHOUT_ASSERTIONS
+  if (unlikely(!Py_OptimizeFlag)) {
+    if (unlikely(!((__pyx_v_other_set_size == (__pyx_v_scores->dimensions[0])) != 0))) {
+      PyErr_SetNone(PyExc_AssertionError);
+      __PYX_ERR(0, 27, __pyx_L1_error)
+    }
+  }
+  #endif
+
+  /* "partialcomparison.pyx":28
+ * 
+ *     assert other_set_size == scores.shape[0]
+ *     assert query_lf_size*image_size == subset_query.shape[0]             # <<<<<<<<<<<<<<
+ *     assert other_lf_size*image_size*other_set_size == subset_other.shape[0]
+ * 
+ */
+  #ifndef CYTHON_WITHOUT_ASSERTIONS
+  if (unlikely(!Py_OptimizeFlag)) {
+    if (unlikely(!(((__pyx_v_query_lf_size * __pyx_v_image_size) == (__pyx_v_subset_query->dimensions[0])) != 0))) {
+      PyErr_SetNone(PyExc_AssertionError);
+      __PYX_ERR(0, 28, __pyx_L1_error)
+    }
+  }
+  #endif
+
+  /* "partialcomparison.pyx":29
+ *     assert other_set_size == scores.shape[0]
+ *     assert query_lf_size*image_size == subset_query.shape[0]
+ *     assert other_lf_size*image_size*other_set_size == subset_other.shape[0]             # <<<<<<<<<<<<<<
+ * 
+ *     cdef double low_score, curr_score
+ */
+  #ifndef CYTHON_WITHOUT_ASSERTIONS
+  if (unlikely(!Py_OptimizeFlag)) {
+    if (unlikely(!((((__pyx_v_other_lf_size * __pyx_v_image_size) * __pyx_v_other_set_size) == (__pyx_v_subset_other->dimensions[0])) != 0))) {
+      PyErr_SetNone(PyExc_AssertionError);
+      __PYX_ERR(0, 29, __pyx_L1_error)
+    }
+  }
+  #endif
+
+  /* "partialcomparison.pyx":33
+ *     cdef double low_score, curr_score
+ * 
+ *     for i in range(other_set_size):             # <<<<<<<<<<<<<<
+ *         low_score = -1
+ * 
+ */
+  __pyx_t_1 = __pyx_v_other_set_size;
   for (__pyx_t_2 = 0; __pyx_t_2 < __pyx_t_1; __pyx_t_2+=1) {
     __pyx_v_i = __pyx_t_2;
 
-    /* "partialcomparison.pyx":25
+    /* "partialcomparison.pyx":34
  * 
- *     for i in range(set_size):
- *         shape_id = ids_of_set[i]             # <<<<<<<<<<<<<<
- *         if shape_id == query_id:
- *             scores[i] = -1
- */
-    __pyx_t_3 = __Pyx_GetItemInt(((PyObject *)__pyx_v_ids_of_set), __pyx_v_i, int, 1, __Pyx_PyInt_From_int, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 25, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_4 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_4 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 25, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-    __pyx_v_shape_id = __pyx_t_4;
-
-    /* "partialcomparison.pyx":26
- *     for i in range(set_size):
- *         shape_id = ids_of_set[i]
- *         if shape_id == query_id:             # <<<<<<<<<<<<<<
- *             scores[i] = -1
- *             continue
- */
-    __pyx_t_5 = ((__pyx_v_shape_id == __pyx_v_query_id) != 0);
-    if (__pyx_t_5) {
-
-      /* "partialcomparison.pyx":27
- *         shape_id = ids_of_set[i]
- *         if shape_id == query_id:
- *             scores[i] = -1             # <<<<<<<<<<<<<<
- *             continue
- *         low_score = -1
- */
-      if (unlikely(__Pyx_SetItemInt(((PyObject *)__pyx_v_scores), __pyx_v_i, __pyx_int_neg_1, int, 1, __Pyx_PyInt_From_int, 0, 1, 1) < 0)) __PYX_ERR(0, 27, __pyx_L1_error)
-
-      /* "partialcomparison.pyx":28
- *         if shape_id == query_id:
- *             scores[i] = -1
- *             continue             # <<<<<<<<<<<<<<
- *         low_score = -1
- *         for j in range(lfs_size_q):
- */
-      goto __pyx_L3_continue;
-
-      /* "partialcomparison.pyx":26
- *     for i in range(set_size):
- *         shape_id = ids_of_set[i]
- *         if shape_id == query_id:             # <<<<<<<<<<<<<<
- *             scores[i] = -1
- *             continue
- */
-    }
-
-    /* "partialcomparison.pyx":29
- *             scores[i] = -1
- *             continue
+ *     for i in range(other_set_size):
  *         low_score = -1             # <<<<<<<<<<<<<<
- *         for j in range(lfs_size_q):
- *             lf_id_q = lfs_of_queries[j]
+ * 
+ *         for j in range(query_lf_size):
  */
     __pyx_v_low_score = -1.0;
 
-    /* "partialcomparison.pyx":30
- *             continue
+    /* "partialcomparison.pyx":36
  *         low_score = -1
- *         for j in range(lfs_size_q):             # <<<<<<<<<<<<<<
- *             lf_id_q = lfs_of_queries[j]
- *             for k in range(10):
- */
-    __pyx_t_4 = __pyx_v_lfs_size_q;
-    for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_4; __pyx_t_6+=1) {
-      __pyx_v_j = __pyx_t_6;
-
-      /* "partialcomparison.pyx":31
- *         low_score = -1
- *         for j in range(lfs_size_q):
- *             lf_id_q = lfs_of_queries[j]             # <<<<<<<<<<<<<<
- *             for k in range(10):
+ * 
+ *         for j in range(query_lf_size):             # <<<<<<<<<<<<<<
+ *             for k in range(other_lf_size):
  *                 curr_score = 0
  */
-      __pyx_t_3 = __Pyx_GetItemInt(((PyObject *)__pyx_v_lfs_of_queries), __pyx_v_j, int, 1, __Pyx_PyInt_From_int, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 31, __pyx_L1_error)
-      __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_7 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_7 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 31, __pyx_L1_error)
-      __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_v_lf_id_q = __pyx_t_7;
+    __pyx_t_3 = __pyx_v_query_lf_size;
+    for (__pyx_t_4 = 0; __pyx_t_4 < __pyx_t_3; __pyx_t_4+=1) {
+      __pyx_v_j = __pyx_t_4;
 
-      /* "partialcomparison.pyx":32
- *         for j in range(lfs_size_q):
- *             lf_id_q = lfs_of_queries[j]
- *             for k in range(10):             # <<<<<<<<<<<<<<
+      /* "partialcomparison.pyx":37
+ * 
+ *         for j in range(query_lf_size):
+ *             for k in range(other_lf_size):             # <<<<<<<<<<<<<<
  *                 curr_score = 0
  *                 for i2 in range(image_size):
  */
-      for (__pyx_t_7 = 0; __pyx_t_7 < 10; __pyx_t_7+=1) {
-        __pyx_v_k = __pyx_t_7;
+      __pyx_t_5 = __pyx_v_other_lf_size;
+      for (__pyx_t_6 = 0; __pyx_t_6 < __pyx_t_5; __pyx_t_6+=1) {
+        __pyx_v_k = __pyx_t_6;
 
-        /* "partialcomparison.pyx":33
- *             lf_id_q = lfs_of_queries[j]
- *             for k in range(10):
+        /* "partialcomparison.pyx":38
+ *         for j in range(query_lf_size):
+ *             for k in range(other_lf_size):
  *                 curr_score = 0             # <<<<<<<<<<<<<<
  *                 for i2 in range(image_size):
- *                     image_id = image_selection[i2]
+ *                     t1 = j*image_size
  */
         __pyx_v_curr_score = 0.0;
 
-        /* "partialcomparison.pyx":34
- *             for k in range(10):
+        /* "partialcomparison.pyx":39
+ *             for k in range(other_lf_size):
  *                 curr_score = 0
  *                 for i2 in range(image_size):             # <<<<<<<<<<<<<<
- *                     image_id = image_selection[i2]
- *                     for j2 in range(number_of_coeff): # hideous...
+ *                     t1 = j*image_size
+ *                     t2 = k*image_size+i*other_lf_size*image_size
  */
-        __pyx_t_8 = __pyx_v_image_size;
-        for (__pyx_t_9 = 0; __pyx_t_9 < __pyx_t_8; __pyx_t_9+=1) {
-          __pyx_v_i2 = __pyx_t_9;
+        __pyx_t_7 = __pyx_v_image_size;
+        for (__pyx_t_8 = 0; __pyx_t_8 < __pyx_t_7; __pyx_t_8+=1) {
+          __pyx_v_i2 = __pyx_t_8;
 
-          /* "partialcomparison.pyx":35
+          /* "partialcomparison.pyx":40
  *                 curr_score = 0
  *                 for i2 in range(image_size):
- *                     image_id = image_selection[i2]             # <<<<<<<<<<<<<<
- *                     for j2 in range(number_of_coeff): # hideous...
- *                         z0 = features[image_id+query_id*100+lf_id_q*10,j2]
+ *                     t1 = j*image_size             # <<<<<<<<<<<<<<
+ *                     t2 = k*image_size+i*other_lf_size*image_size
+ *                     for j2 in range(number_of_coeff):
  */
-          __pyx_t_3 = __Pyx_GetItemInt(((PyObject *)__pyx_v_image_selection), __pyx_v_i2, int, 1, __Pyx_PyInt_From_int, 0, 1, 1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 35, __pyx_L1_error)
-          __Pyx_GOTREF(__pyx_t_3);
-          __pyx_t_10 = __Pyx_PyInt_As_int(__pyx_t_3); if (unlikely((__pyx_t_10 == (int)-1) && PyErr_Occurred())) __PYX_ERR(0, 35, __pyx_L1_error)
-          __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-          __pyx_v_image_id = __pyx_t_10;
+          __pyx_v_t1 = (__pyx_v_j * __pyx_v_image_size);
 
-          /* "partialcomparison.pyx":36
+          /* "partialcomparison.pyx":41
  *                 for i2 in range(image_size):
- *                     image_id = image_selection[i2]
- *                     for j2 in range(number_of_coeff): # hideous...             # <<<<<<<<<<<<<<
- *                         z0 = features[image_id+query_id*100+lf_id_q*10,j2]
- *                         z1 = features[image_id+shape_id*100+k*10,j2]
+ *                     t1 = j*image_size
+ *                     t2 = k*image_size+i*other_lf_size*image_size             # <<<<<<<<<<<<<<
+ *                     for j2 in range(number_of_coeff):
+ *                         z0 = subset_query[i2+t1,j2]
  */
-          __pyx_t_10 = __pyx_v_number_of_coeff;
-          for (__pyx_t_11 = 0; __pyx_t_11 < __pyx_t_10; __pyx_t_11+=1) {
-            __pyx_v_j2 = __pyx_t_11;
+          __pyx_v_t2 = ((__pyx_v_k * __pyx_v_image_size) + ((__pyx_v_i * __pyx_v_other_lf_size) * __pyx_v_image_size));
 
-            /* "partialcomparison.pyx":37
- *                     image_id = image_selection[i2]
- *                     for j2 in range(number_of_coeff): # hideous...
- *                         z0 = features[image_id+query_id*100+lf_id_q*10,j2]             # <<<<<<<<<<<<<<
- *                         z1 = features[image_id+shape_id*100+k*10,j2]
+          /* "partialcomparison.pyx":42
+ *                     t1 = j*image_size
+ *                     t2 = k*image_size+i*other_lf_size*image_size
+ *                     for j2 in range(number_of_coeff):             # <<<<<<<<<<<<<<
+ *                         z0 = subset_query[i2+t1,j2]
+ *                         z1 = subset_other[i2+t2,j2]
+ */
+          __pyx_t_9 = __pyx_v_number_of_coeff;
+          for (__pyx_t_10 = 0; __pyx_t_10 < __pyx_t_9; __pyx_t_10+=1) {
+            __pyx_v_j2 = __pyx_t_10;
+
+            /* "partialcomparison.pyx":43
+ *                     t2 = k*image_size+i*other_lf_size*image_size
+ *                     for j2 in range(number_of_coeff):
+ *                         z0 = subset_query[i2+t1,j2]             # <<<<<<<<<<<<<<
+ *                         z1 = subset_other[i2+t2,j2]
  *                         curr_score += fabs(z0-z1)
  */
-            __pyx_t_3 = __Pyx_PyInt_From_long(((__pyx_v_image_id + (__pyx_v_query_id * 0x64)) + (__pyx_v_lf_id_q * 10))); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 37, __pyx_L1_error)
-            __Pyx_GOTREF(__pyx_t_3);
-            __pyx_t_12 = __Pyx_PyInt_From_int(__pyx_v_j2); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 37, __pyx_L1_error)
-            __Pyx_GOTREF(__pyx_t_12);
-            __pyx_t_13 = PyTuple_New(2); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 37, __pyx_L1_error)
-            __Pyx_GOTREF(__pyx_t_13);
-            __Pyx_GIVEREF(__pyx_t_3);
-            PyTuple_SET_ITEM(__pyx_t_13, 0, __pyx_t_3);
-            __Pyx_GIVEREF(__pyx_t_12);
-            PyTuple_SET_ITEM(__pyx_t_13, 1, __pyx_t_12);
-            __pyx_t_3 = 0;
-            __pyx_t_12 = 0;
-            __pyx_t_12 = PyObject_GetItem(((PyObject *)__pyx_v_features), __pyx_t_13); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 37, __pyx_L1_error)
-            __Pyx_GOTREF(__pyx_t_12);
-            __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-            __pyx_t_14 = __pyx_PyFloat_AsDouble(__pyx_t_12); if (unlikely((__pyx_t_14 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 37, __pyx_L1_error)
-            __Pyx_DECREF(__pyx_t_12); __pyx_t_12 = 0;
-            __pyx_v_z0 = __pyx_t_14;
+            __pyx_t_11 = (__pyx_v_i2 + __pyx_v_t1);
+            __pyx_t_12 = __pyx_v_j2;
+            __pyx_v_z0 = (*__Pyx_BufPtrStrided2d(__pyx_t_17partialcomparison_DTYPE_t *, __pyx_pybuffernd_subset_query.rcbuffer->pybuffer.buf, __pyx_t_11, __pyx_pybuffernd_subset_query.diminfo[0].strides, __pyx_t_12, __pyx_pybuffernd_subset_query.diminfo[1].strides));
 
-            /* "partialcomparison.pyx":38
- *                     for j2 in range(number_of_coeff): # hideous...
- *                         z0 = features[image_id+query_id*100+lf_id_q*10,j2]
- *                         z1 = features[image_id+shape_id*100+k*10,j2]             # <<<<<<<<<<<<<<
+            /* "partialcomparison.pyx":44
+ *                     for j2 in range(number_of_coeff):
+ *                         z0 = subset_query[i2+t1,j2]
+ *                         z1 = subset_other[i2+t2,j2]             # <<<<<<<<<<<<<<
  *                         curr_score += fabs(z0-z1)
  *                 if low_score < 0 or curr_score < low_score:
  */
-            __pyx_t_12 = __Pyx_PyInt_From_long(((__pyx_v_image_id + (__pyx_v_shape_id * 0x64)) + (__pyx_v_k * 10))); if (unlikely(!__pyx_t_12)) __PYX_ERR(0, 38, __pyx_L1_error)
-            __Pyx_GOTREF(__pyx_t_12);
-            __pyx_t_13 = __Pyx_PyInt_From_int(__pyx_v_j2); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 38, __pyx_L1_error)
-            __Pyx_GOTREF(__pyx_t_13);
-            __pyx_t_3 = PyTuple_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 38, __pyx_L1_error)
-            __Pyx_GOTREF(__pyx_t_3);
-            __Pyx_GIVEREF(__pyx_t_12);
-            PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_t_12);
-            __Pyx_GIVEREF(__pyx_t_13);
-            PyTuple_SET_ITEM(__pyx_t_3, 1, __pyx_t_13);
-            __pyx_t_12 = 0;
-            __pyx_t_13 = 0;
-            __pyx_t_13 = PyObject_GetItem(((PyObject *)__pyx_v_features), __pyx_t_3); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 38, __pyx_L1_error)
-            __Pyx_GOTREF(__pyx_t_13);
-            __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-            __pyx_t_14 = __pyx_PyFloat_AsDouble(__pyx_t_13); if (unlikely((__pyx_t_14 == (double)-1) && PyErr_Occurred())) __PYX_ERR(0, 38, __pyx_L1_error)
-            __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-            __pyx_v_z1 = __pyx_t_14;
+            __pyx_t_13 = (__pyx_v_i2 + __pyx_v_t2);
+            __pyx_t_14 = __pyx_v_j2;
+            __pyx_v_z1 = (*__Pyx_BufPtrStrided2d(__pyx_t_17partialcomparison_DTYPE_t *, __pyx_pybuffernd_subset_other.rcbuffer->pybuffer.buf, __pyx_t_13, __pyx_pybuffernd_subset_other.diminfo[0].strides, __pyx_t_14, __pyx_pybuffernd_subset_other.diminfo[1].strides));
 
-            /* "partialcomparison.pyx":39
- *                         z0 = features[image_id+query_id*100+lf_id_q*10,j2]
- *                         z1 = features[image_id+shape_id*100+k*10,j2]
+            /* "partialcomparison.pyx":45
+ *                         z0 = subset_query[i2+t1,j2]
+ *                         z1 = subset_other[i2+t2,j2]
  *                         curr_score += fabs(z0-z1)             # <<<<<<<<<<<<<<
  *                 if low_score < 0 or curr_score < low_score:
  *                     low_score = curr_score
@@ -1838,73 +1854,81 @@ static PyObject *__pyx_pf_17partialcomparison_compare_and_reject(CYTHON_UNUSED P
           }
         }
 
-        /* "partialcomparison.pyx":40
- *                         z1 = features[image_id+shape_id*100+k*10,j2]
+        /* "partialcomparison.pyx":46
+ *                         z1 = subset_other[i2+t2,j2]
  *                         curr_score += fabs(z0-z1)
  *                 if low_score < 0 or curr_score < low_score:             # <<<<<<<<<<<<<<
  *                     low_score = curr_score
- *         scores[i] = low_score
+ * 
  */
-        __pyx_t_15 = ((__pyx_v_low_score < 0.0) != 0);
-        if (!__pyx_t_15) {
+        __pyx_t_16 = ((__pyx_v_low_score < 0.0) != 0);
+        if (!__pyx_t_16) {
         } else {
-          __pyx_t_5 = __pyx_t_15;
-          goto __pyx_L15_bool_binop_done;
+          __pyx_t_15 = __pyx_t_16;
+          goto __pyx_L14_bool_binop_done;
         }
-        __pyx_t_15 = ((__pyx_v_curr_score < __pyx_v_low_score) != 0);
-        __pyx_t_5 = __pyx_t_15;
-        __pyx_L15_bool_binop_done:;
-        if (__pyx_t_5) {
+        __pyx_t_16 = ((__pyx_v_curr_score < __pyx_v_low_score) != 0);
+        __pyx_t_15 = __pyx_t_16;
+        __pyx_L14_bool_binop_done:;
+        if (__pyx_t_15) {
 
-          /* "partialcomparison.pyx":41
+          /* "partialcomparison.pyx":47
  *                         curr_score += fabs(z0-z1)
  *                 if low_score < 0 or curr_score < low_score:
  *                     low_score = curr_score             # <<<<<<<<<<<<<<
+ * 
  *         scores[i] = low_score
  */
           __pyx_v_low_score = __pyx_v_curr_score;
 
-          /* "partialcomparison.pyx":40
- *                         z1 = features[image_id+shape_id*100+k*10,j2]
+          /* "partialcomparison.pyx":46
+ *                         z1 = subset_other[i2+t2,j2]
  *                         curr_score += fabs(z0-z1)
  *                 if low_score < 0 or curr_score < low_score:             # <<<<<<<<<<<<<<
  *                     low_score = curr_score
- *         scores[i] = low_score
+ * 
  */
         }
       }
     }
 
-    /* "partialcomparison.pyx":42
- *                 if low_score < 0 or curr_score < low_score:
+    /* "partialcomparison.pyx":49
  *                     low_score = curr_score
+ * 
  *         scores[i] = low_score             # <<<<<<<<<<<<<<
  */
-    __pyx_t_13 = PyFloat_FromDouble(__pyx_v_low_score); if (unlikely(!__pyx_t_13)) __PYX_ERR(0, 42, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_13);
-    if (unlikely(__Pyx_SetItemInt(((PyObject *)__pyx_v_scores), __pyx_v_i, __pyx_t_13, int, 1, __Pyx_PyInt_From_int, 0, 1, 1) < 0)) __PYX_ERR(0, 42, __pyx_L1_error)
-    __Pyx_DECREF(__pyx_t_13); __pyx_t_13 = 0;
-    __pyx_L3_continue:;
+    __pyx_t_17 = __pyx_v_i;
+    *__Pyx_BufPtrStrided1d(__pyx_t_17partialcomparison_DTYPE_t *, __pyx_pybuffernd_scores.rcbuffer->pybuffer.buf, __pyx_t_17, __pyx_pybuffernd_scores.diminfo[0].strides) = __pyx_v_low_score;
   }
 
-  /* "partialcomparison.pyx":11
- * from libc.math cimport fabs
- * 
- * def compare_and_reject(int query_id, np.ndarray features, np.ndarray ids_of_set,             # <<<<<<<<<<<<<<
- *                        int number_of_coeff, np.ndarray image_selection,
- *                        np.ndarray lfs_of_queries, np.ndarray scores):
+  /* "partialcomparison.pyx":17
+ * @cython.wraparound(False)
+ * @cython.nonecheck(False)
+ * def compare_partial(np.ndarray[DTYPE_t, ndim=2] subset_query,             # <<<<<<<<<<<<<<
+ *                     np.ndarray[DTYPE_t, ndim=2] subset_other,
+ *                     int query_lf_size, int other_set_size, int other_lf_size,
  */
 
   /* function exit code */
   __pyx_r = Py_None; __Pyx_INCREF(Py_None);
   goto __pyx_L0;
   __pyx_L1_error:;
-  __Pyx_XDECREF(__pyx_t_3);
-  __Pyx_XDECREF(__pyx_t_12);
-  __Pyx_XDECREF(__pyx_t_13);
-  __Pyx_AddTraceback("partialcomparison.compare_and_reject", __pyx_clineno, __pyx_lineno, __pyx_filename);
+  { PyObject *__pyx_type, *__pyx_value, *__pyx_tb;
+    __Pyx_PyThreadState_declare
+    __Pyx_PyThreadState_assign
+    __Pyx_ErrFetch(&__pyx_type, &__pyx_value, &__pyx_tb);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_scores.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_subset_other.rcbuffer->pybuffer);
+    __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_subset_query.rcbuffer->pybuffer);
+  __Pyx_ErrRestore(__pyx_type, __pyx_value, __pyx_tb);}
+  __Pyx_AddTraceback("partialcomparison.compare_partial", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __pyx_r = NULL;
+  goto __pyx_L2;
   __pyx_L0:;
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_scores.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_subset_other.rcbuffer->pybuffer);
+  __Pyx_SafeReleaseBuffer(&__pyx_pybuffernd_subset_query.rcbuffer->pybuffer);
+  __pyx_L2:;
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
@@ -4454,39 +4478,34 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_kp_u_Non_native_byte_order_not_suppor, __pyx_k_Non_native_byte_order_not_suppor, sizeof(__pyx_k_Non_native_byte_order_not_suppor), 0, 1, 0, 0},
   {&__pyx_n_s_RuntimeError, __pyx_k_RuntimeError, sizeof(__pyx_k_RuntimeError), 0, 0, 1, 1},
   {&__pyx_n_s_ValueError, __pyx_k_ValueError, sizeof(__pyx_k_ValueError), 0, 0, 1, 1},
-  {&__pyx_n_s_compare_and_reject, __pyx_k_compare_and_reject, sizeof(__pyx_k_compare_and_reject), 0, 0, 1, 1},
+  {&__pyx_n_s_compare_partial, __pyx_k_compare_partial, sizeof(__pyx_k_compare_partial), 0, 0, 1, 1},
   {&__pyx_n_s_curr_score, __pyx_k_curr_score, sizeof(__pyx_k_curr_score), 0, 0, 1, 1},
-  {&__pyx_n_s_features, __pyx_k_features, sizeof(__pyx_k_features), 0, 0, 1, 1},
   {&__pyx_n_s_i, __pyx_k_i, sizeof(__pyx_k_i), 0, 0, 1, 1},
   {&__pyx_n_s_i2, __pyx_k_i2, sizeof(__pyx_k_i2), 0, 0, 1, 1},
-  {&__pyx_n_s_ids_of_set, __pyx_k_ids_of_set, sizeof(__pyx_k_ids_of_set), 0, 0, 1, 1},
-  {&__pyx_n_s_image_id, __pyx_k_image_id, sizeof(__pyx_k_image_id), 0, 0, 1, 1},
-  {&__pyx_n_s_image_selection, __pyx_k_image_selection, sizeof(__pyx_k_image_selection), 0, 0, 1, 1},
   {&__pyx_n_s_image_size, __pyx_k_image_size, sizeof(__pyx_k_image_size), 0, 0, 1, 1},
   {&__pyx_n_s_import, __pyx_k_import, sizeof(__pyx_k_import), 0, 0, 1, 1},
   {&__pyx_n_s_j, __pyx_k_j, sizeof(__pyx_k_j), 0, 0, 1, 1},
   {&__pyx_n_s_j2, __pyx_k_j2, sizeof(__pyx_k_j2), 0, 0, 1, 1},
   {&__pyx_n_s_k, __pyx_k_k, sizeof(__pyx_k_k), 0, 0, 1, 1},
-  {&__pyx_n_s_lf_id_q, __pyx_k_lf_id_q, sizeof(__pyx_k_lf_id_q), 0, 0, 1, 1},
-  {&__pyx_n_s_lfs_of_queries, __pyx_k_lfs_of_queries, sizeof(__pyx_k_lfs_of_queries), 0, 0, 1, 1},
-  {&__pyx_n_s_lfs_size_q, __pyx_k_lfs_size_q, sizeof(__pyx_k_lfs_size_q), 0, 0, 1, 1},
   {&__pyx_n_s_low_score, __pyx_k_low_score, sizeof(__pyx_k_low_score), 0, 0, 1, 1},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
   {&__pyx_kp_u_ndarray_is_not_C_contiguous, __pyx_k_ndarray_is_not_C_contiguous, sizeof(__pyx_k_ndarray_is_not_C_contiguous), 0, 1, 0, 0},
   {&__pyx_kp_u_ndarray_is_not_Fortran_contiguou, __pyx_k_ndarray_is_not_Fortran_contiguou, sizeof(__pyx_k_ndarray_is_not_Fortran_contiguou), 0, 1, 0, 0},
-  {&__pyx_n_s_new_score, __pyx_k_new_score, sizeof(__pyx_k_new_score), 0, 0, 1, 1},
   {&__pyx_n_s_np, __pyx_k_np, sizeof(__pyx_k_np), 0, 0, 1, 1},
   {&__pyx_n_s_number_of_coeff, __pyx_k_number_of_coeff, sizeof(__pyx_k_number_of_coeff), 0, 0, 1, 1},
   {&__pyx_n_s_numpy, __pyx_k_numpy, sizeof(__pyx_k_numpy), 0, 0, 1, 1},
   {&__pyx_kp_s_numpy_core_multiarray_failed_to, __pyx_k_numpy_core_multiarray_failed_to, sizeof(__pyx_k_numpy_core_multiarray_failed_to), 0, 0, 1, 0},
   {&__pyx_kp_s_numpy_core_umath_failed_to_impor, __pyx_k_numpy_core_umath_failed_to_impor, sizeof(__pyx_k_numpy_core_umath_failed_to_impor), 0, 0, 1, 0},
+  {&__pyx_n_s_other_lf_size, __pyx_k_other_lf_size, sizeof(__pyx_k_other_lf_size), 0, 0, 1, 1},
+  {&__pyx_n_s_other_set_size, __pyx_k_other_set_size, sizeof(__pyx_k_other_set_size), 0, 0, 1, 1},
   {&__pyx_n_s_partialcomparison, __pyx_k_partialcomparison, sizeof(__pyx_k_partialcomparison), 0, 0, 1, 1},
-  {&__pyx_n_s_query_id, __pyx_k_query_id, sizeof(__pyx_k_query_id), 0, 0, 1, 1},
+  {&__pyx_n_s_query_lf_size, __pyx_k_query_lf_size, sizeof(__pyx_k_query_lf_size), 0, 0, 1, 1},
   {&__pyx_n_s_range, __pyx_k_range, sizeof(__pyx_k_range), 0, 0, 1, 1},
   {&__pyx_n_s_scores, __pyx_k_scores, sizeof(__pyx_k_scores), 0, 0, 1, 1},
-  {&__pyx_n_s_set_size, __pyx_k_set_size, sizeof(__pyx_k_set_size), 0, 0, 1, 1},
-  {&__pyx_n_s_shape_id, __pyx_k_shape_id, sizeof(__pyx_k_shape_id), 0, 0, 1, 1},
-  {&__pyx_n_s_summ, __pyx_k_summ, sizeof(__pyx_k_summ), 0, 0, 1, 1},
+  {&__pyx_n_s_subset_other, __pyx_k_subset_other, sizeof(__pyx_k_subset_other), 0, 0, 1, 1},
+  {&__pyx_n_s_subset_query, __pyx_k_subset_query, sizeof(__pyx_k_subset_query), 0, 0, 1, 1},
+  {&__pyx_n_s_t1, __pyx_k_t1, sizeof(__pyx_k_t1), 0, 0, 1, 1},
+  {&__pyx_n_s_t2, __pyx_k_t2, sizeof(__pyx_k_t2), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
   {&__pyx_kp_u_unknown_dtype_code_in_numpy_pxd, __pyx_k_unknown_dtype_code_in_numpy_pxd, sizeof(__pyx_k_unknown_dtype_code_in_numpy_pxd), 0, 1, 0, 0},
   {&__pyx_n_s_z0, __pyx_k_z0, sizeof(__pyx_k_z0), 0, 0, 1, 1},
@@ -4494,7 +4513,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {0, 0, 0, 0, 0, 0, 0}
 };
 static int __Pyx_InitCachedBuiltins(void) {
-  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 24, __pyx_L1_error)
+  __pyx_builtin_range = __Pyx_GetBuiltinName(__pyx_n_s_range); if (!__pyx_builtin_range) __PYX_ERR(0, 33, __pyx_L1_error)
   __pyx_builtin_ValueError = __Pyx_GetBuiltinName(__pyx_n_s_ValueError); if (!__pyx_builtin_ValueError) __PYX_ERR(1, 218, __pyx_L1_error)
   __pyx_builtin_RuntimeError = __Pyx_GetBuiltinName(__pyx_n_s_RuntimeError); if (!__pyx_builtin_RuntimeError) __PYX_ERR(1, 799, __pyx_L1_error)
   __pyx_builtin_ImportError = __Pyx_GetBuiltinName(__pyx_n_s_ImportError); if (!__pyx_builtin_ImportError) __PYX_ERR(1, 989, __pyx_L1_error)
@@ -4604,17 +4623,17 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
 
-  /* "partialcomparison.pyx":11
- * from libc.math cimport fabs
- * 
- * def compare_and_reject(int query_id, np.ndarray features, np.ndarray ids_of_set,             # <<<<<<<<<<<<<<
- *                        int number_of_coeff, np.ndarray image_selection,
- *                        np.ndarray lfs_of_queries, np.ndarray scores):
+  /* "partialcomparison.pyx":17
+ * @cython.wraparound(False)
+ * @cython.nonecheck(False)
+ * def compare_partial(np.ndarray[DTYPE_t, ndim=2] subset_query,             # <<<<<<<<<<<<<<
+ *                     np.ndarray[DTYPE_t, ndim=2] subset_other,
+ *                     int query_lf_size, int other_set_size, int other_lf_size,
  */
-  __pyx_tuple__10 = PyTuple_Pack(24, __pyx_n_s_query_id, __pyx_n_s_features, __pyx_n_s_ids_of_set, __pyx_n_s_number_of_coeff, __pyx_n_s_image_selection, __pyx_n_s_lfs_of_queries, __pyx_n_s_scores, __pyx_n_s_set_size, __pyx_n_s_image_size, __pyx_n_s_lfs_size_q, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_k, __pyx_n_s_i2, __pyx_n_s_j2, __pyx_n_s_shape_id, __pyx_n_s_image_id, __pyx_n_s_lf_id_q, __pyx_n_s_low_score, __pyx_n_s_new_score, __pyx_n_s_curr_score, __pyx_n_s_summ, __pyx_n_s_z0, __pyx_n_s_z1); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_tuple__10 = PyTuple_Pack(19, __pyx_n_s_subset_query, __pyx_n_s_subset_other, __pyx_n_s_query_lf_size, __pyx_n_s_other_set_size, __pyx_n_s_other_lf_size, __pyx_n_s_image_size, __pyx_n_s_scores, __pyx_n_s_number_of_coeff, __pyx_n_s_i, __pyx_n_s_j, __pyx_n_s_k, __pyx_n_s_i2, __pyx_n_s_j2, __pyx_n_s_t1, __pyx_n_s_t2, __pyx_n_s_z0, __pyx_n_s_z1, __pyx_n_s_low_score, __pyx_n_s_curr_score); if (unlikely(!__pyx_tuple__10)) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__10);
   __Pyx_GIVEREF(__pyx_tuple__10);
-  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(7, 0, 24, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_C_Users_chenym_OneDrive_Document, __pyx_n_s_compare_and_reject, 11, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_codeobj__11 = (PyObject*)__Pyx_PyCode_New(7, 0, 19, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__10, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_C_Users_chenym_OneDrive_Document, __pyx_n_s_compare_partial, 17, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__11)) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -4624,7 +4643,6 @@ static int __Pyx_InitCachedConstants(void) {
 
 static int __Pyx_InitGlobals(void) {
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) __PYX_ERR(0, 1, __pyx_L1_error);
-  __pyx_int_neg_1 = PyInt_FromLong(-1); if (unlikely(!__pyx_int_neg_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
   return -1;
@@ -4746,16 +4764,16 @@ PyMODINIT_FUNC PyInit_partialcomparison(void)
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_np, __pyx_t_1) < 0) __PYX_ERR(0, 7, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "partialcomparison.pyx":11
- * from libc.math cimport fabs
- * 
- * def compare_and_reject(int query_id, np.ndarray features, np.ndarray ids_of_set,             # <<<<<<<<<<<<<<
- *                        int number_of_coeff, np.ndarray image_selection,
- *                        np.ndarray lfs_of_queries, np.ndarray scores):
+  /* "partialcomparison.pyx":17
+ * @cython.wraparound(False)
+ * @cython.nonecheck(False)
+ * def compare_partial(np.ndarray[DTYPE_t, ndim=2] subset_query,             # <<<<<<<<<<<<<<
+ *                     np.ndarray[DTYPE_t, ndim=2] subset_other,
+ *                     int query_lf_size, int other_set_size, int other_lf_size,
  */
-  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_17partialcomparison_1compare_and_reject, NULL, __pyx_n_s_partialcomparison); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 11, __pyx_L1_error)
+  __pyx_t_1 = PyCFunction_NewEx(&__pyx_mdef_17partialcomparison_1compare_partial, NULL, __pyx_n_s_partialcomparison); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_compare_and_reject, __pyx_t_1) < 0) __PYX_ERR(0, 11, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_compare_partial, __pyx_t_1) < 0) __PYX_ERR(0, 17, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "partialcomparison.pyx":1
@@ -4999,154 +5017,555 @@ static CYTHON_INLINE int __Pyx_ArgTypeTest(PyObject *obj, PyTypeObject *type, in
     return 0;
 }
 
-/* GetItemInt */
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Generic(PyObject *o, PyObject* j) {
-    PyObject *r;
-    if (!j) return NULL;
-    r = PyObject_GetItem(o, j);
-    Py_DECREF(j);
-    return r;
+/* BufferFormatCheck */
+static CYTHON_INLINE int __Pyx_IsLittleEndian(void) {
+  unsigned int n = 1;
+  return *(unsigned char*)(&n) != 0;
 }
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_List_Fast(PyObject *o, Py_ssize_t i,
-                                                              CYTHON_NCP_UNUSED int wraparound,
-                                                              CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    if (wraparound & unlikely(i < 0)) i += PyList_GET_SIZE(o);
-    if ((!boundscheck) || likely((0 <= i) & (i < PyList_GET_SIZE(o)))) {
-        PyObject *r = PyList_GET_ITEM(o, i);
-        Py_INCREF(r);
-        return r;
-    }
-    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
-#else
-    return PySequence_GetItem(o, i);
-#endif
+static void __Pyx_BufFmt_Init(__Pyx_BufFmt_Context* ctx,
+                              __Pyx_BufFmt_StackElem* stack,
+                              __Pyx_TypeInfo* type) {
+  stack[0].field = &ctx->root;
+  stack[0].parent_offset = 0;
+  ctx->root.type = type;
+  ctx->root.name = "buffer dtype";
+  ctx->root.offset = 0;
+  ctx->head = stack;
+  ctx->head->field = &ctx->root;
+  ctx->fmt_offset = 0;
+  ctx->head->parent_offset = 0;
+  ctx->new_packmode = '@';
+  ctx->enc_packmode = '@';
+  ctx->new_count = 1;
+  ctx->enc_count = 0;
+  ctx->enc_type = 0;
+  ctx->is_complex = 0;
+  ctx->is_valid_array = 0;
+  ctx->struct_alignment = 0;
+  while (type->typegroup == 'S') {
+    ++ctx->head;
+    ctx->head->field = type->fields;
+    ctx->head->parent_offset = 0;
+    type = type->fields->type;
+  }
 }
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Tuple_Fast(PyObject *o, Py_ssize_t i,
-                                                              CYTHON_NCP_UNUSED int wraparound,
-                                                              CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS
-    if (wraparound & unlikely(i < 0)) i += PyTuple_GET_SIZE(o);
-    if ((!boundscheck) || likely((0 <= i) & (i < PyTuple_GET_SIZE(o)))) {
-        PyObject *r = PyTuple_GET_ITEM(o, i);
-        Py_INCREF(r);
-        return r;
-    }
-    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
-#else
-    return PySequence_GetItem(o, i);
-#endif
-}
-static CYTHON_INLINE PyObject *__Pyx_GetItemInt_Fast(PyObject *o, Py_ssize_t i, int is_list,
-                                                     CYTHON_NCP_UNUSED int wraparound,
-                                                     CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
-    if (is_list || PyList_CheckExact(o)) {
-        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyList_GET_SIZE(o);
-        if ((!boundscheck) || (likely((n >= 0) & (n < PyList_GET_SIZE(o))))) {
-            PyObject *r = PyList_GET_ITEM(o, n);
-            Py_INCREF(r);
-            return r;
-        }
-    }
-    else if (PyTuple_CheckExact(o)) {
-        Py_ssize_t n = ((!wraparound) | likely(i >= 0)) ? i : i + PyTuple_GET_SIZE(o);
-        if ((!boundscheck) || likely((n >= 0) & (n < PyTuple_GET_SIZE(o)))) {
-            PyObject *r = PyTuple_GET_ITEM(o, n);
-            Py_INCREF(r);
-            return r;
-        }
+static int __Pyx_BufFmt_ParseNumber(const char** ts) {
+    int count;
+    const char* t = *ts;
+    if (*t < '0' || *t > '9') {
+      return -1;
     } else {
-        PySequenceMethods *m = Py_TYPE(o)->tp_as_sequence;
-        if (likely(m && m->sq_item)) {
-            if (wraparound && unlikely(i < 0) && likely(m->sq_length)) {
-                Py_ssize_t l = m->sq_length(o);
-                if (likely(l >= 0)) {
-                    i += l;
-                } else {
-                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
-                        return NULL;
-                    PyErr_Clear();
-                }
-            }
-            return m->sq_item(o, i);
+        count = *t++ - '0';
+        while (*t >= '0' && *t < '9') {
+            count *= 10;
+            count += *t++ - '0';
         }
     }
-#else
-    if (is_list || PySequence_Check(o)) {
-        return PySequence_GetItem(o, i);
+    *ts = t;
+    return count;
+}
+static int __Pyx_BufFmt_ExpectNumber(const char **ts) {
+    int number = __Pyx_BufFmt_ParseNumber(ts);
+    if (number == -1)
+        PyErr_Format(PyExc_ValueError,\
+                     "Does not understand character buffer dtype format string ('%c')", **ts);
+    return number;
+}
+static void __Pyx_BufFmt_RaiseUnexpectedChar(char ch) {
+  PyErr_Format(PyExc_ValueError,
+               "Unexpected format string character: '%c'", ch);
+}
+static const char* __Pyx_BufFmt_DescribeTypeChar(char ch, int is_complex) {
+  switch (ch) {
+    case 'c': return "'char'";
+    case 'b': return "'signed char'";
+    case 'B': return "'unsigned char'";
+    case 'h': return "'short'";
+    case 'H': return "'unsigned short'";
+    case 'i': return "'int'";
+    case 'I': return "'unsigned int'";
+    case 'l': return "'long'";
+    case 'L': return "'unsigned long'";
+    case 'q': return "'long long'";
+    case 'Q': return "'unsigned long long'";
+    case 'f': return (is_complex ? "'complex float'" : "'float'");
+    case 'd': return (is_complex ? "'complex double'" : "'double'");
+    case 'g': return (is_complex ? "'complex long double'" : "'long double'");
+    case 'T': return "a struct";
+    case 'O': return "Python object";
+    case 'P': return "a pointer";
+    case 's': case 'p': return "a string";
+    case 0: return "end";
+    default: return "unparseable format string";
+  }
+}
+static size_t __Pyx_BufFmt_TypeCharToStandardSize(char ch, int is_complex) {
+  switch (ch) {
+    case '?': case 'c': case 'b': case 'B': case 's': case 'p': return 1;
+    case 'h': case 'H': return 2;
+    case 'i': case 'I': case 'l': case 'L': return 4;
+    case 'q': case 'Q': return 8;
+    case 'f': return (is_complex ? 8 : 4);
+    case 'd': return (is_complex ? 16 : 8);
+    case 'g': {
+      PyErr_SetString(PyExc_ValueError, "Python does not define a standard format string size for long double ('g')..");
+      return 0;
     }
+    case 'O': case 'P': return sizeof(void*);
+    default:
+      __Pyx_BufFmt_RaiseUnexpectedChar(ch);
+      return 0;
+    }
+}
+static size_t __Pyx_BufFmt_TypeCharToNativeSize(char ch, int is_complex) {
+  switch (ch) {
+    case 'c': case 'b': case 'B': case 's': case 'p': return 1;
+    case 'h': case 'H': return sizeof(short);
+    case 'i': case 'I': return sizeof(int);
+    case 'l': case 'L': return sizeof(long);
+    #ifdef HAVE_LONG_LONG
+    case 'q': case 'Q': return sizeof(PY_LONG_LONG);
+    #endif
+    case 'f': return sizeof(float) * (is_complex ? 2 : 1);
+    case 'd': return sizeof(double) * (is_complex ? 2 : 1);
+    case 'g': return sizeof(long double) * (is_complex ? 2 : 1);
+    case 'O': case 'P': return sizeof(void*);
+    default: {
+      __Pyx_BufFmt_RaiseUnexpectedChar(ch);
+      return 0;
+    }
+  }
+}
+typedef struct { char c; short x; } __Pyx_st_short;
+typedef struct { char c; int x; } __Pyx_st_int;
+typedef struct { char c; long x; } __Pyx_st_long;
+typedef struct { char c; float x; } __Pyx_st_float;
+typedef struct { char c; double x; } __Pyx_st_double;
+typedef struct { char c; long double x; } __Pyx_st_longdouble;
+typedef struct { char c; void *x; } __Pyx_st_void_p;
+#ifdef HAVE_LONG_LONG
+typedef struct { char c; PY_LONG_LONG x; } __Pyx_st_longlong;
 #endif
-    return __Pyx_GetItemInt_Generic(o, PyInt_FromSsize_t(i));
+static size_t __Pyx_BufFmt_TypeCharToAlignment(char ch, CYTHON_UNUSED int is_complex) {
+  switch (ch) {
+    case '?': case 'c': case 'b': case 'B': case 's': case 'p': return 1;
+    case 'h': case 'H': return sizeof(__Pyx_st_short) - sizeof(short);
+    case 'i': case 'I': return sizeof(__Pyx_st_int) - sizeof(int);
+    case 'l': case 'L': return sizeof(__Pyx_st_long) - sizeof(long);
+#ifdef HAVE_LONG_LONG
+    case 'q': case 'Q': return sizeof(__Pyx_st_longlong) - sizeof(PY_LONG_LONG);
+#endif
+    case 'f': return sizeof(__Pyx_st_float) - sizeof(float);
+    case 'd': return sizeof(__Pyx_st_double) - sizeof(double);
+    case 'g': return sizeof(__Pyx_st_longdouble) - sizeof(long double);
+    case 'P': case 'O': return sizeof(__Pyx_st_void_p) - sizeof(void*);
+    default:
+      __Pyx_BufFmt_RaiseUnexpectedChar(ch);
+      return 0;
+    }
 }
-
-/* SetItemInt */
-static CYTHON_INLINE int __Pyx_SetItemInt_Generic(PyObject *o, PyObject *j, PyObject *v) {
-    int r;
-    if (!j) return -1;
-    r = PyObject_SetItem(o, j, v);
-    Py_DECREF(j);
-    return r;
+/* These are for computing the padding at the end of the struct to align
+   on the first member of the struct. This will probably the same as above,
+   but we don't have any guarantees.
+ */
+typedef struct { short x; char c; } __Pyx_pad_short;
+typedef struct { int x; char c; } __Pyx_pad_int;
+typedef struct { long x; char c; } __Pyx_pad_long;
+typedef struct { float x; char c; } __Pyx_pad_float;
+typedef struct { double x; char c; } __Pyx_pad_double;
+typedef struct { long double x; char c; } __Pyx_pad_longdouble;
+typedef struct { void *x; char c; } __Pyx_pad_void_p;
+#ifdef HAVE_LONG_LONG
+typedef struct { PY_LONG_LONG x; char c; } __Pyx_pad_longlong;
+#endif
+static size_t __Pyx_BufFmt_TypeCharToPadding(char ch, CYTHON_UNUSED int is_complex) {
+  switch (ch) {
+    case '?': case 'c': case 'b': case 'B': case 's': case 'p': return 1;
+    case 'h': case 'H': return sizeof(__Pyx_pad_short) - sizeof(short);
+    case 'i': case 'I': return sizeof(__Pyx_pad_int) - sizeof(int);
+    case 'l': case 'L': return sizeof(__Pyx_pad_long) - sizeof(long);
+#ifdef HAVE_LONG_LONG
+    case 'q': case 'Q': return sizeof(__Pyx_pad_longlong) - sizeof(PY_LONG_LONG);
+#endif
+    case 'f': return sizeof(__Pyx_pad_float) - sizeof(float);
+    case 'd': return sizeof(__Pyx_pad_double) - sizeof(double);
+    case 'g': return sizeof(__Pyx_pad_longdouble) - sizeof(long double);
+    case 'P': case 'O': return sizeof(__Pyx_pad_void_p) - sizeof(void*);
+    default:
+      __Pyx_BufFmt_RaiseUnexpectedChar(ch);
+      return 0;
+    }
 }
-static CYTHON_INLINE int __Pyx_SetItemInt_Fast(PyObject *o, Py_ssize_t i, PyObject *v, int is_list,
-                                               CYTHON_NCP_UNUSED int wraparound, CYTHON_NCP_UNUSED int boundscheck) {
-#if CYTHON_ASSUME_SAFE_MACROS && !CYTHON_AVOID_BORROWED_REFS && CYTHON_USE_TYPE_SLOTS
-    if (is_list || PyList_CheckExact(o)) {
-        Py_ssize_t n = (!wraparound) ? i : ((likely(i >= 0)) ? i : i + PyList_GET_SIZE(o));
-        if ((!boundscheck) || likely((n >= 0) & (n < PyList_GET_SIZE(o)))) {
-            PyObject* old = PyList_GET_ITEM(o, n);
-            Py_INCREF(v);
-            PyList_SET_ITEM(o, n, v);
-            Py_DECREF(old);
-            return 1;
-        }
+static char __Pyx_BufFmt_TypeCharToGroup(char ch, int is_complex) {
+  switch (ch) {
+    case 'c':
+        return 'H';
+    case 'b': case 'h': case 'i':
+    case 'l': case 'q': case 's': case 'p':
+        return 'I';
+    case 'B': case 'H': case 'I': case 'L': case 'Q':
+        return 'U';
+    case 'f': case 'd': case 'g':
+        return (is_complex ? 'C' : 'R');
+    case 'O':
+        return 'O';
+    case 'P':
+        return 'P';
+    default: {
+      __Pyx_BufFmt_RaiseUnexpectedChar(ch);
+      return 0;
+    }
+  }
+}
+static void __Pyx_BufFmt_RaiseExpected(__Pyx_BufFmt_Context* ctx) {
+  if (ctx->head == NULL || ctx->head->field == &ctx->root) {
+    const char* expected;
+    const char* quote;
+    if (ctx->head == NULL) {
+      expected = "end";
+      quote = "";
     } else {
-        PySequenceMethods *m = Py_TYPE(o)->tp_as_sequence;
-        if (likely(m && m->sq_ass_item)) {
-            if (wraparound && unlikely(i < 0) && likely(m->sq_length)) {
-                Py_ssize_t l = m->sq_length(o);
-                if (likely(l >= 0)) {
-                    i += l;
-                } else {
-                    if (!PyErr_ExceptionMatches(PyExc_OverflowError))
-                        return -1;
-                    PyErr_Clear();
-                }
-            }
-            return m->sq_ass_item(o, i, v);
+      expected = ctx->head->field->type->name;
+      quote = "'";
+    }
+    PyErr_Format(PyExc_ValueError,
+                 "Buffer dtype mismatch, expected %s%s%s but got %s",
+                 quote, expected, quote,
+                 __Pyx_BufFmt_DescribeTypeChar(ctx->enc_type, ctx->is_complex));
+  } else {
+    __Pyx_StructField* field = ctx->head->field;
+    __Pyx_StructField* parent = (ctx->head - 1)->field;
+    PyErr_Format(PyExc_ValueError,
+                 "Buffer dtype mismatch, expected '%s' but got %s in '%s.%s'",
+                 field->type->name, __Pyx_BufFmt_DescribeTypeChar(ctx->enc_type, ctx->is_complex),
+                 parent->type->name, field->name);
+  }
+}
+static int __Pyx_BufFmt_ProcessTypeChunk(__Pyx_BufFmt_Context* ctx) {
+  char group;
+  size_t size, offset, arraysize = 1;
+  if (ctx->enc_type == 0) return 0;
+  if (ctx->head->field->type->arraysize[0]) {
+    int i, ndim = 0;
+    if (ctx->enc_type == 's' || ctx->enc_type == 'p') {
+        ctx->is_valid_array = ctx->head->field->type->ndim == 1;
+        ndim = 1;
+        if (ctx->enc_count != ctx->head->field->type->arraysize[0]) {
+            PyErr_Format(PyExc_ValueError,
+                         "Expected a dimension of size %zu, got %zu",
+                         ctx->head->field->type->arraysize[0], ctx->enc_count);
+            return -1;
         }
     }
-#else
-#if CYTHON_COMPILING_IN_PYPY
-    if (is_list || (PySequence_Check(o) && !PyDict_Check(o))) {
-#else
-    if (is_list || PySequence_Check(o)) {
-#endif
-        return PySequence_SetItem(o, i, v);
+    if (!ctx->is_valid_array) {
+      PyErr_Format(PyExc_ValueError, "Expected %d dimensions, got %d",
+                   ctx->head->field->type->ndim, ndim);
+      return -1;
     }
-#endif
-    return __Pyx_SetItemInt_Generic(o, PyInt_FromSsize_t(i), v);
+    for (i = 0; i < ctx->head->field->type->ndim; i++) {
+      arraysize *= ctx->head->field->type->arraysize[i];
+    }
+    ctx->is_valid_array = 0;
+    ctx->enc_count = 1;
+  }
+  group = __Pyx_BufFmt_TypeCharToGroup(ctx->enc_type, ctx->is_complex);
+  do {
+    __Pyx_StructField* field = ctx->head->field;
+    __Pyx_TypeInfo* type = field->type;
+    if (ctx->enc_packmode == '@' || ctx->enc_packmode == '^') {
+      size = __Pyx_BufFmt_TypeCharToNativeSize(ctx->enc_type, ctx->is_complex);
+    } else {
+      size = __Pyx_BufFmt_TypeCharToStandardSize(ctx->enc_type, ctx->is_complex);
+    }
+    if (ctx->enc_packmode == '@') {
+      size_t align_at = __Pyx_BufFmt_TypeCharToAlignment(ctx->enc_type, ctx->is_complex);
+      size_t align_mod_offset;
+      if (align_at == 0) return -1;
+      align_mod_offset = ctx->fmt_offset % align_at;
+      if (align_mod_offset > 0) ctx->fmt_offset += align_at - align_mod_offset;
+      if (ctx->struct_alignment == 0)
+          ctx->struct_alignment = __Pyx_BufFmt_TypeCharToPadding(ctx->enc_type,
+                                                                 ctx->is_complex);
+    }
+    if (type->size != size || type->typegroup != group) {
+      if (type->typegroup == 'C' && type->fields != NULL) {
+        size_t parent_offset = ctx->head->parent_offset + field->offset;
+        ++ctx->head;
+        ctx->head->field = type->fields;
+        ctx->head->parent_offset = parent_offset;
+        continue;
+      }
+      if ((type->typegroup == 'H' || group == 'H') && type->size == size) {
+      } else {
+          __Pyx_BufFmt_RaiseExpected(ctx);
+          return -1;
+      }
+    }
+    offset = ctx->head->parent_offset + field->offset;
+    if (ctx->fmt_offset != offset) {
+      PyErr_Format(PyExc_ValueError,
+                   "Buffer dtype mismatch; next field is at offset %" CYTHON_FORMAT_SSIZE_T "d but %" CYTHON_FORMAT_SSIZE_T "d expected",
+                   (Py_ssize_t)ctx->fmt_offset, (Py_ssize_t)offset);
+      return -1;
+    }
+    ctx->fmt_offset += size;
+    if (arraysize)
+      ctx->fmt_offset += (arraysize - 1) * size;
+    --ctx->enc_count;
+    while (1) {
+      if (field == &ctx->root) {
+        ctx->head = NULL;
+        if (ctx->enc_count != 0) {
+          __Pyx_BufFmt_RaiseExpected(ctx);
+          return -1;
+        }
+        break;
+      }
+      ctx->head->field = ++field;
+      if (field->type == NULL) {
+        --ctx->head;
+        field = ctx->head->field;
+        continue;
+      } else if (field->type->typegroup == 'S') {
+        size_t parent_offset = ctx->head->parent_offset + field->offset;
+        if (field->type->fields->type == NULL) continue;
+        field = field->type->fields;
+        ++ctx->head;
+        ctx->head->field = field;
+        ctx->head->parent_offset = parent_offset;
+        break;
+      } else {
+        break;
+      }
+    }
+  } while (ctx->enc_count);
+  ctx->enc_type = 0;
+  ctx->is_complex = 0;
+  return 0;
 }
-
-/* PyObjectCall */
-  #if CYTHON_COMPILING_IN_CPYTHON
-static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
-    PyObject *result;
-    ternaryfunc call = func->ob_type->tp_call;
-    if (unlikely(!call))
-        return PyObject_Call(func, arg, kw);
-    if (unlikely(Py_EnterRecursiveCall((char*)" while calling a Python object")))
+static CYTHON_INLINE PyObject *
+__pyx_buffmt_parse_array(__Pyx_BufFmt_Context* ctx, const char** tsp)
+{
+    const char *ts = *tsp;
+    int i = 0, number;
+    int ndim = ctx->head->field->type->ndim;
+;
+    ++ts;
+    if (ctx->new_count != 1) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Cannot handle repeated arrays in format string");
         return NULL;
-    result = (*call)(func, arg, kw);
-    Py_LeaveRecursiveCall();
-    if (unlikely(!result) && unlikely(!PyErr_Occurred())) {
-        PyErr_SetString(
-            PyExc_SystemError,
-            "NULL result without error in PyObject_Call");
     }
-    return result;
+    if (__Pyx_BufFmt_ProcessTypeChunk(ctx) == -1) return NULL;
+    while (*ts && *ts != ')') {
+        switch (*ts) {
+            case ' ': case '\f': case '\r': case '\n': case '\t': case '\v':  continue;
+            default:  break;
+        }
+        number = __Pyx_BufFmt_ExpectNumber(&ts);
+        if (number == -1) return NULL;
+        if (i < ndim && (size_t) number != ctx->head->field->type->arraysize[i])
+            return PyErr_Format(PyExc_ValueError,
+                        "Expected a dimension of size %zu, got %d",
+                        ctx->head->field->type->arraysize[i], number);
+        if (*ts != ',' && *ts != ')')
+            return PyErr_Format(PyExc_ValueError,
+                                "Expected a comma in format string, got '%c'", *ts);
+        if (*ts == ',') ts++;
+        i++;
+    }
+    if (i != ndim)
+        return PyErr_Format(PyExc_ValueError, "Expected %d dimension(s), got %d",
+                            ctx->head->field->type->ndim, i);
+    if (!*ts) {
+        PyErr_SetString(PyExc_ValueError,
+                        "Unexpected end of format string, expected ')'");
+        return NULL;
+    }
+    ctx->is_valid_array = 1;
+    ctx->new_count = 1;
+    *tsp = ++ts;
+    return Py_None;
 }
-#endif
+static const char* __Pyx_BufFmt_CheckString(__Pyx_BufFmt_Context* ctx, const char* ts) {
+  int got_Z = 0;
+  while (1) {
+    switch(*ts) {
+      case 0:
+        if (ctx->enc_type != 0 && ctx->head == NULL) {
+          __Pyx_BufFmt_RaiseExpected(ctx);
+          return NULL;
+        }
+        if (__Pyx_BufFmt_ProcessTypeChunk(ctx) == -1) return NULL;
+        if (ctx->head != NULL) {
+          __Pyx_BufFmt_RaiseExpected(ctx);
+          return NULL;
+        }
+        return ts;
+      case ' ':
+      case '\r':
+      case '\n':
+        ++ts;
+        break;
+      case '<':
+        if (!__Pyx_IsLittleEndian()) {
+          PyErr_SetString(PyExc_ValueError, "Little-endian buffer not supported on big-endian compiler");
+          return NULL;
+        }
+        ctx->new_packmode = '=';
+        ++ts;
+        break;
+      case '>':
+      case '!':
+        if (__Pyx_IsLittleEndian()) {
+          PyErr_SetString(PyExc_ValueError, "Big-endian buffer not supported on little-endian compiler");
+          return NULL;
+        }
+        ctx->new_packmode = '=';
+        ++ts;
+        break;
+      case '=':
+      case '@':
+      case '^':
+        ctx->new_packmode = *ts++;
+        break;
+      case 'T':
+        {
+          const char* ts_after_sub;
+          size_t i, struct_count = ctx->new_count;
+          size_t struct_alignment = ctx->struct_alignment;
+          ctx->new_count = 1;
+          ++ts;
+          if (*ts != '{') {
+            PyErr_SetString(PyExc_ValueError, "Buffer acquisition: Expected '{' after 'T'");
+            return NULL;
+          }
+          if (__Pyx_BufFmt_ProcessTypeChunk(ctx) == -1) return NULL;
+          ctx->enc_type = 0;
+          ctx->enc_count = 0;
+          ctx->struct_alignment = 0;
+          ++ts;
+          ts_after_sub = ts;
+          for (i = 0; i != struct_count; ++i) {
+            ts_after_sub = __Pyx_BufFmt_CheckString(ctx, ts);
+            if (!ts_after_sub) return NULL;
+          }
+          ts = ts_after_sub;
+          if (struct_alignment) ctx->struct_alignment = struct_alignment;
+        }
+        break;
+      case '}':
+        {
+          size_t alignment = ctx->struct_alignment;
+          ++ts;
+          if (__Pyx_BufFmt_ProcessTypeChunk(ctx) == -1) return NULL;
+          ctx->enc_type = 0;
+          if (alignment && ctx->fmt_offset % alignment) {
+            ctx->fmt_offset += alignment - (ctx->fmt_offset % alignment);
+          }
+        }
+        return ts;
+      case 'x':
+        if (__Pyx_BufFmt_ProcessTypeChunk(ctx) == -1) return NULL;
+        ctx->fmt_offset += ctx->new_count;
+        ctx->new_count = 1;
+        ctx->enc_count = 0;
+        ctx->enc_type = 0;
+        ctx->enc_packmode = ctx->new_packmode;
+        ++ts;
+        break;
+      case 'Z':
+        got_Z = 1;
+        ++ts;
+        if (*ts != 'f' && *ts != 'd' && *ts != 'g') {
+          __Pyx_BufFmt_RaiseUnexpectedChar('Z');
+          return NULL;
+        }
+      case 'c': case 'b': case 'B': case 'h': case 'H': case 'i': case 'I':
+      case 'l': case 'L': case 'q': case 'Q':
+      case 'f': case 'd': case 'g':
+      case 'O': case 'p':
+        if (ctx->enc_type == *ts && got_Z == ctx->is_complex &&
+            ctx->enc_packmode == ctx->new_packmode) {
+          ctx->enc_count += ctx->new_count;
+          ctx->new_count = 1;
+          got_Z = 0;
+          ++ts;
+          break;
+        }
+      case 's':
+        if (__Pyx_BufFmt_ProcessTypeChunk(ctx) == -1) return NULL;
+        ctx->enc_count = ctx->new_count;
+        ctx->enc_packmode = ctx->new_packmode;
+        ctx->enc_type = *ts;
+        ctx->is_complex = got_Z;
+        ++ts;
+        ctx->new_count = 1;
+        got_Z = 0;
+        break;
+      case ':':
+        ++ts;
+        while(*ts != ':') ++ts;
+        ++ts;
+        break;
+      case '(':
+        if (!__pyx_buffmt_parse_array(ctx, &ts)) return NULL;
+        break;
+      default:
+        {
+          int number = __Pyx_BufFmt_ExpectNumber(&ts);
+          if (number == -1) return NULL;
+          ctx->new_count = (size_t)number;
+        }
+    }
+  }
+}
+static CYTHON_INLINE void __Pyx_ZeroBuffer(Py_buffer* buf) {
+  buf->buf = NULL;
+  buf->obj = NULL;
+  buf->strides = __Pyx_zeros;
+  buf->shape = __Pyx_zeros;
+  buf->suboffsets = __Pyx_minusones;
+}
+static CYTHON_INLINE int __Pyx_GetBufferAndValidate(
+        Py_buffer* buf, PyObject* obj,  __Pyx_TypeInfo* dtype, int flags,
+        int nd, int cast, __Pyx_BufFmt_StackElem* stack)
+{
+  if (obj == Py_None || obj == NULL) {
+    __Pyx_ZeroBuffer(buf);
+    return 0;
+  }
+  buf->buf = NULL;
+  if (__Pyx_GetBuffer(obj, buf, flags) == -1) goto fail;
+  if (buf->ndim != nd) {
+    PyErr_Format(PyExc_ValueError,
+                 "Buffer has wrong number of dimensions (expected %d, got %d)",
+                 nd, buf->ndim);
+    goto fail;
+  }
+  if (!cast) {
+    __Pyx_BufFmt_Context ctx;
+    __Pyx_BufFmt_Init(&ctx, stack, dtype);
+    if (!__Pyx_BufFmt_CheckString(&ctx, buf->format)) goto fail;
+  }
+  if ((unsigned)buf->itemsize != dtype->size) {
+    PyErr_Format(PyExc_ValueError,
+      "Item size of buffer (%" CYTHON_FORMAT_SSIZE_T "d byte%s) does not match size of '%s' (%" CYTHON_FORMAT_SSIZE_T "d byte%s)",
+      buf->itemsize, (buf->itemsize > 1) ? "s" : "",
+      dtype->name, (Py_ssize_t)dtype->size, (dtype->size > 1) ? "s" : "");
+    goto fail;
+  }
+  if (buf->suboffsets == NULL) buf->suboffsets = __Pyx_minusones;
+  return 0;
+fail:;
+  __Pyx_ZeroBuffer(buf);
+  return -1;
+}
+static CYTHON_INLINE void __Pyx_SafeReleaseBuffer(Py_buffer* info) {
+  if (info->buf == NULL) return;
+  if (info->suboffsets == __Pyx_minusones) info->suboffsets = NULL;
+  __Pyx_ReleaseBuffer(info);
+}
 
 /* PyErrFetchRestore */
   #if CYTHON_FAST_THREAD_STATE
@@ -5169,6 +5588,26 @@ static CYTHON_INLINE void __Pyx_ErrFetchInState(PyThreadState *tstate, PyObject 
     tstate->curexc_type = 0;
     tstate->curexc_value = 0;
     tstate->curexc_traceback = 0;
+}
+#endif
+
+/* PyObjectCall */
+  #if CYTHON_COMPILING_IN_CPYTHON
+static CYTHON_INLINE PyObject* __Pyx_PyObject_Call(PyObject *func, PyObject *arg, PyObject *kw) {
+    PyObject *result;
+    ternaryfunc call = func->ob_type->tp_call;
+    if (unlikely(!call))
+        return PyObject_Call(func, arg, kw);
+    if (unlikely(Py_EnterRecursiveCall((char*)" while calling a Python object")))
+        return NULL;
+    result = (*call)(func, arg, kw);
+    Py_LeaveRecursiveCall();
+    if (unlikely(!result) && unlikely(!PyErr_Occurred())) {
+        PyErr_SetString(
+            PyExc_SystemError,
+            "NULL result without error in PyObject_Call");
+    }
+    return result;
 }
 #endif
 
@@ -5696,7 +6135,28 @@ bad:
     Py_XDECREF(py_frame);
 }
 
-/* CIntFromPyVerify */
+#if PY_MAJOR_VERSION < 3
+static int __Pyx_GetBuffer(PyObject *obj, Py_buffer *view, int flags) {
+    if (PyObject_CheckBuffer(obj)) return PyObject_GetBuffer(obj, view, flags);
+        if (PyObject_TypeCheck(obj, __pyx_ptype_5numpy_ndarray)) return __pyx_pw_5numpy_7ndarray_1__getbuffer__(obj, view, flags);
+    PyErr_Format(PyExc_TypeError, "'%.200s' does not have the buffer interface", Py_TYPE(obj)->tp_name);
+    return -1;
+}
+static void __Pyx_ReleaseBuffer(Py_buffer *view) {
+    PyObject *obj = view->obj;
+    if (!obj) return;
+    if (PyObject_CheckBuffer(obj)) {
+        PyBuffer_Release(view);
+        return;
+    }
+        if (PyObject_TypeCheck(obj, __pyx_ptype_5numpy_ndarray)) { __pyx_pw_5numpy_7ndarray_3__releasebuffer__(obj, view); return; }
+    Py_DECREF(obj);
+    view->obj = NULL;
+}
+#endif
+
+
+      /* CIntFromPyVerify */
       #define __PYX_VERIFY_RETURN_INT(target_type, func_type, func_value)\
     __PYX__VERIFY_RETURN_INT(target_type, func_type, func_value, 0)
 #define __PYX_VERIFY_RETURN_INT_EXC(target_type, func_type, func_value)\
@@ -5745,37 +6205,6 @@ bad:
         int one = 1; int little = (int)*(unsigned char *)&one;
         unsigned char *bytes = (unsigned char *)&value;
         return _PyLong_FromByteArray(bytes, sizeof(int),
-                                     little, !is_unsigned);
-    }
-}
-
-/* CIntToPy */
-      static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value) {
-    const long neg_one = (long) -1, const_zero = (long) 0;
-    const int is_unsigned = neg_one > const_zero;
-    if (is_unsigned) {
-        if (sizeof(long) < sizeof(long)) {
-            return PyInt_FromLong((long) value);
-        } else if (sizeof(long) <= sizeof(unsigned long)) {
-            return PyLong_FromUnsignedLong((unsigned long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(long) <= sizeof(unsigned PY_LONG_LONG)) {
-            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
-#endif
-        }
-    } else {
-        if (sizeof(long) <= sizeof(long)) {
-            return PyInt_FromLong((long) value);
-#ifdef HAVE_LONG_LONG
-        } else if (sizeof(long) <= sizeof(PY_LONG_LONG)) {
-            return PyLong_FromLongLong((PY_LONG_LONG) value);
-#endif
-        }
-    }
-    {
-        int one = 1; int little = (int)*(unsigned char *)&one;
-        unsigned char *bytes = (unsigned char *)&value;
-        return _PyLong_FromByteArray(bytes, sizeof(long),
                                      little, !is_unsigned);
     }
 }
@@ -6308,6 +6737,37 @@ raise_neg_overflow:
     PyErr_SetString(PyExc_OverflowError,
         "can't convert negative value to int");
     return (int) -1;
+}
+
+/* CIntToPy */
+      static CYTHON_INLINE PyObject* __Pyx_PyInt_From_long(long value) {
+    const long neg_one = (long) -1, const_zero = (long) 0;
+    const int is_unsigned = neg_one > const_zero;
+    if (is_unsigned) {
+        if (sizeof(long) < sizeof(long)) {
+            return PyInt_FromLong((long) value);
+        } else if (sizeof(long) <= sizeof(unsigned long)) {
+            return PyLong_FromUnsignedLong((unsigned long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(long) <= sizeof(unsigned PY_LONG_LONG)) {
+            return PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG) value);
+#endif
+        }
+    } else {
+        if (sizeof(long) <= sizeof(long)) {
+            return PyInt_FromLong((long) value);
+#ifdef HAVE_LONG_LONG
+        } else if (sizeof(long) <= sizeof(PY_LONG_LONG)) {
+            return PyLong_FromLongLong((PY_LONG_LONG) value);
+#endif
+        }
+    }
+    {
+        int one = 1; int little = (int)*(unsigned char *)&one;
+        unsigned char *bytes = (unsigned char *)&value;
+        return _PyLong_FromByteArray(bytes, sizeof(long),
+                                     little, !is_unsigned);
+    }
 }
 
 /* CIntFromPy */

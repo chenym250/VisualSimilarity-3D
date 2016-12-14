@@ -5,8 +5,10 @@ Created on Sun Dec 11 08:20:38 2016
 @author: chenym
 """
 
+from load_save_objects import save_obj
+
 clf_file = 'C:\\Users\\chenym\\Downloads\\psb_v1\\benchmark\\classification\\v1\\base\\'
-file_name = 'train.cla'
+file_name = 'test.cla'
 
 class CategoryTree(object):
     
@@ -14,13 +16,20 @@ class CategoryTree(object):
         self.parent = None
         self.children = []
         self.models = []
+        self.modelcount = 0
         self.name = name
         
     def append(self, item):
         self.models.append(item)
+        self.modelcount += 1
         
     def newchild(self,child):
         self.children.append(child)
+
+def recursive_count_model(category):
+    for child in category.children:
+        category.modelcount += recursive_count_model(child)
+    return category.modelcount
 
 def recursive_shape_dict(category, dictionary):
     
@@ -86,7 +95,18 @@ if __name__ == '__main__':
     shapedict = {}
     for cls in topclass.values():
         recursive_shape_dict(cls,shapedict)
+
+    save_obj(shapedict, file_name.replace('.','_') + '_shapedictionary')
+    save_obj(shapedict.keys(), file_name.replace('.','_') + '_shapelist')
     
+    shapedistlow = {key:classdict[key].modelcount for key in classdict.keys()}
+    save_obj(shapedistlow, file_name.replace('.','_') + '_shapedistribution_lowlevel')
+    
+    for cls in topclass.values():
+        recursive_count_model(cls)
+        
+    shapedist = {key:classdict[key].modelcount for key in classdict.keys()}
+    save_obj(shapedist, file_name.replace('.','_') + '_shapedistribution')
 #    verts_list = []
 #
 #    # read vertices    

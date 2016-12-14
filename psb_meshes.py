@@ -10,11 +10,11 @@ Created on Fri Dec 09 20:42:18 2016
 ##############################################################################
 import numpy as np
 from visual_similarity import image_descriptor, lightfield_descriptor, \
-mesh, meshIO, constants
+meshIO, constants
 import scipy.spatial.distance as distance
 from mayavi import mlab
 import time
-import pickle
+from load_save_objects import load_obj, save_obj
 import threading
 import Queue
 from PIL import Image
@@ -26,12 +26,13 @@ from PIL import Image
 # make this configurable in the future
 ##############################################################################
 DBDIR = 'C:\\Users\\chenym\\Downloads\\psb_v1\\benchmark\\db\\'
-PSB_INDICES_FILE = 'indexlist0.txt'
+PSB_SHAPELIST = 'test_cla_shapelist'
 OUTPUTDIR = 'db\\'
-MAX_THREAD = 10
+MAX_THREAD = 20
 USEMULTITHREAD = True
 USEPALLELPROJECTION = True
 INTERRUPTABLE = True
+OUTPUTSIZE = 200
 
 ##############################################################################
 # flags
@@ -65,11 +66,6 @@ class ZernikeCalculatorThread (threading.Thread):
 ##############################################################################
 # helper functions
 ##############################################################################
-def save_obj(obj, name ):
-    full_name = name + time.strftime('_%H%M_%m%d', time.localtime()) + '.pkl'
-    with open(full_name, 'wb') as f:
-        pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
-    return full_name
 
 def readfrompsb(mesh_number):
     parent_number = np.floor(mesh_number/100.0)
@@ -292,7 +288,9 @@ def main_process(indices, descriptor, outputdir=OUTPUTDIR,
 #    save_obj(indices,'meshID_%d_shapes'%totalsize)
     outputdata = {'mesh_list':indices,'features':z_all,\
     'lightfield_id':[lf.id for lf in lfs],'descriptor_attributes':descriptor.attributes()}
-    name = save_obj(outputdata,outputdir+'descriptor_%s_shapecount_%d_timedate_'%(descriptor.name, totalsize))
+    name = save_obj(outputdata,outputdir+\
+    'descriptor_%s_shapecount_%d_timedate_'%(descriptor.name, totalsize),\
+    withdate=True)
     
     print 'data saved, check %s folder; file name: %s' % (outputdir,name)
 
@@ -304,9 +302,11 @@ if __name__ == '__main__':
 #    zernike1 = image_descriptor.ZernikeMoments(degree=4) # 8 coeffs
 #    zernike2 = image_descriptor.ZernikeMoments(degree=6) # 15 coeffs
     zernike3 = image_descriptor.ZernikeMoments(degree=10) # 35 coeffs
-#    ids = np.loadtxt(PSB_INDICES_FILE,dtype='int16',delimiter=',').tolist()
-    main_process(indices,zernike3,\
-    use_parallel_projection=USEPALLELPROJECTION,\
-    maxthread=50,interruptable=INTERRUPTABLE)
+    fourier = image_descriptor.FourierMoments()
+    ids = load_obj(PSB_SHAPELIST)
+    random_subset = np.random.permutation(ids)[0:OUTPUTSIZE]
+    main_process(random_subset,zernike3,\
+    use_parallel_projection=USEPALLELPROJECTION,use_multithread=USEMULTITHREAD,\
+    maxthread=MAX_THREAD,interruptable=INTERRUPTABLE)
 
 #    main_process(ids,zernike3,saveimg=True, savedimgdir='temp2\\', savedimgformat='png')
